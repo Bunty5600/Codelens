@@ -1,0 +1,44 @@
+/* App-level overrides — bulk of styling lives in index.css */
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Animated gradient border for hero CTA */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(var(--bg), var(--bg)) padding-box,
+              linear-gradient(135deg, #22c55e, #3b82f6, #8b5cf6) border-box;
+  border: 2px solid transparent;
+  border-radius: 0.75rem;
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+  0%   { background-position: -700px 0; }
+  100% { background-position:  700px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 700px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 0.5rem;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #273348 50%, #1e293b 75%);
+  background-size: 700px 100%;
+}
+
+/* Score ring */
+.score-ring {
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Page transition */
+.page-enter {
+  animation: fadeUp 0.35s ease both;
+}
