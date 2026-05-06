@@ -165,7 +165,9 @@ Maintainability Index: 72
 
 ---
 
-## Author
+## ## Author
 
-AI Code Complexity Analyzer Project
-Computer Science Engineering
+Developed by Bunty Bhainsa  
+Computer Science Engineering Student passionate about AI, Full Stack Development, and Software Engineering.
+
+- GitHub: https://github.com/Bunty5600
