@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   GitBranch, Shield, BarChart2, FileCode, Zap,
-  AlertTriangle, CheckCircle, XCircle, RefreshCw, ArrowLeft
+  AlertTriangle, CheckCircle, XCircle, RefreshCw, ArrowLeft, Loader2
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -23,12 +23,75 @@ export default function Results() {
   const { dark, toggle } = useTheme()
   const navigate = useNavigate()
   const [data, setData] = useState(null)
+  const [aiTip, setAiTip] = useState('')
+  const [tipLoading, setTipLoading] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('ciq_results')
     console.log("STORED DATA:", stored)
     if (stored) setData(JSON.parse(stored))
   }, [])
+
+  const { metrics } = data || {}
+
+  const cc    = metrics?.cc ?? 0
+  const mi    = metrics?.mi ?? 0
+  const loc   = metrics?.loc ?? 0
+  const funcs = metrics?.functions ?? 0
+  const insights = metrics?.insights || []
+  const mlPrediction = data?.ml_prediction ?? null
+
+  const halstead = {
+    volume:     metrics?.halstead?.volume     ?? 0,
+    effort:     metrics?.halstead?.effort     ?? 0,
+    vocabulary: metrics?.halstead?.vocabulary ?? 0,
+    length:     metrics?.halstead?.length     ?? 0,
+    difficulty: metrics?.halstead?.difficulty ?? 0,
+  }
+
+  // ── Gemini AI Tip ──────────────────────────────────────
+  useEffect(() => {
+    if (!data) return
+    if (cc === 0 && mi === 0) return
+    generateTip()
+  }, [cc, mi, loc, funcs])
+
+  const generateTip = async () => {
+    setTipLoading(true)
+    try {
+      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: `You are a code quality expert. Given these metrics:
+- Cyclomatic Complexity: ${cc} (good: ≤10, warning: ≤20, critical: >20)
+- Maintainability Index: ${mi}/100 (good: ≥65, warning: ≥45, poor: <45)
+- Lines of Code: ${loc}
+- Functions: ${funcs}
+- Halstead Volume: ${halstead.volume}
+
+Give ONE specific, actionable tip to improve this code.
+Max 2 sentences. Be direct and practical. No markdown.`
+              }]
+            }]
+          })
+        }
+      )
+      const result = await response.json()
+      setAiTip(result.candidates[0].content.parts[0].text)
+    } catch (err) {
+      console.error('Gemini error:', err)
+      setAiTip('Keep functions small and focused for better maintainability.')
+    } finally {
+      setTipLoading(false)
+    }
+  }
+  // ───────────────────────────────────────────────────────
 
   if (!data) {
     return (
@@ -45,23 +108,6 @@ export default function Results() {
       </div>
     )
   }
-
-  const { metrics } = data || {}
-
-  // ✅ FIXED: read from correct nested sub-objects
- const cc    = metrics?.cc ?? 0
-const mi    = metrics?.mi ?? 0
-const loc   = metrics?.loc ?? 0
-const funcs = metrics?.functions ?? 0
-  const insights = metrics?.insights || []
-
-const halstead = {
-  volume:     metrics?.halstead?.volume     ?? 0,
-  effort:     metrics?.halstead?.effort     ?? 0,
-  vocabulary: metrics?.halstead?.vocabulary ?? 0,
-  length:     metrics?.halstead?.length     ?? 0,
-  difficulty: metrics?.halstead?.difficulty ?? 0,
-}
 
   const barData = [
     { name: 'Cyclomatic', value: cc,    fill: cc <= 10 ? '#22c55e' : cc <= 20 ? '#eab308' : '#ef4444' },
@@ -203,16 +249,53 @@ const halstead = {
           <div className="card p-5">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-4 h-4 text-yellow-500" />
-              <h3 className="font-display font-semibold text-slate-900 dark:text-white text-sm">AI Insights</h3>
+              <h3 className="font-display font-semibold text-slate-900 dark:text-white text-sm">
+                AI Insights
+              </h3>
               <span className="badge-blue ml-auto">Powered by AI</span>
             </div>
+
             <div className="space-y-3">
+
+              {/* ML Prediction */}
+              {mlPrediction && (
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs uppercase tracking-wider text-slate-400">
+                    ML Defect Prediction
+                  </p>
+                  <p className="text-2xl font-display font-bold mt-2 text-slate-900 dark:text-white">
+                    {mlPrediction.risk_level} Risk
+                  </p>
+                  <p className="text-sm mt-1 text-slate-500 dark:text-slate-400">
+                    Confidence: {mlPrediction.confidence}%
+                  </p>
+                </div>
+              )}
+
+              {/* Dynamic Insights */}
               {insights.map((ins, i) => (
-                <Alert key={i} type={ins.type === 'danger' ? 'error' : ins.type} message={ins.msg} />
+                <Alert
+                  key={i}
+                  type={ins.type === 'danger' ? 'error' : ins.type}
+                  message={ins.msg}
+                />
               ))}
+
+              {/* Gemini AI Tip */}
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-600 dark:text-slate-400">
-                💡 <span className="font-medium">Tip:</span> Functions with cyclomatic complexity &gt; 10 should be decomposed into smaller, single-responsibility units.
+                {tipLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin text-emerald-500" />
+                    <span className="animate-pulse">Generating AI tip...</span>
+                  </div>
+                ) : (
+                  <>
+                    💡 <span className="font-medium">AI Tip:</span>{" "}
+                    {aiTip || "Keep functions small and focused for better maintainability."}
+                  </>
+                )}
               </div>
+
             </div>
           </div>
 

@@ -13,6 +13,8 @@ from analyzer.analyzer import analyze_code
 from fastapi import HTTPException
 from api.auth import hash_password, verify_password, create_token
 from api.schemas.analysis_schema import SignupRequest, LoginRequest
+from ml.predictor import predict_defect_risk
+
 
 app = FastAPI()
 
@@ -49,13 +51,22 @@ def signup(data: SignupRequest, db: Session = Depends(get_db)):
 # ── Login ────
 @app.post("/auth/login")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
-    db_user = db.query(user.User).filter(user.User.email == data.email).first()
-    if not db_user or not verify_password(data.password, db_user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    token = create_token({"sub": str(db_user.id), "email": db_user.email})
-    return {"token": token, "name": db_user.name, "email": db_user.email}
-
+    try:
+        db_user = db.query(user.User).filter(user.User.email == data.email).first()
+        print("USER FOUND:", db_user)
+        if not db_user:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        print("HASHED IN DB:", db_user.hashed_password)
+        result = verify_password(data.password, db_user.hashed_password)
+        print("VERIFY RESULT:", result)
+        if not result:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        token = create_token({"sub": str(db_user.id), "email": db_user.email})
+        return {"token": token, "name": db_user.name, "email": db_user.email}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise
 
 @app.post("/analyze/code")
 def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
@@ -64,6 +75,21 @@ def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
     filename = data.filename or "test.py"
 
     result = analyze_code(code)
+    ml_prediction = predict_defect_risk({
+        "cc": result.get("complexity", {}).get(
+            "cyclomatic_complexity", 0
+        ),
+
+        "mi": result.get("maintainability", {}).get(
+            "maintainability_index", 0
+        ),
+
+        "loc": result.get("size", {}).get(
+            "loc", 0
+        ),
+
+        "halstead": result.get("halstead", {})
+    })
     print(result)  # Keep this so you can verify keys in terminal
 
     db_user = db.query(user.User).first()
@@ -122,7 +148,8 @@ def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
             "functions": result.get("structure", {}).get("functions", 0),
 
             "halstead": result.get("halstead", {})
-        }
+        },
+        "ml_prediction": ml_prediction
     }
 
 @app.get("/test-db")
