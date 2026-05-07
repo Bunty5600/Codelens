@@ -1,85 +1,121 @@
-# AI Code Complexity Analyzer
+# CodeLens AI — Code Complexity Analyzer
 
-AI Code Complexity Analyzer is a static code analysis system designed to evaluate software complexity, maintainability, and defect risk using software engineering metrics and machine learning.
+CodeLens AI is a full-stack code quality analysis platform that evaluates software complexity, maintainability, and defect risk using static code analysis, machine learning, and AI-powered insights.
 
-The system analyzes Python source code and generates a detailed report including code complexity metrics and risk predictions.
+---
+
+## What's New
+
+- JWT-based authentication (Signup & Login)
+- ML defect risk prediction with confidence scores
+- Google Gemini AI-powered code quality tips
+- PostgreSQL database integration
+- React + Vite frontend with dark mode
 
 ---
 
 ## Features
 
-* Static code analysis using Python AST
-* Cyclomatic Complexity calculation
-* Halstead Metrics computation
-* Maintainability Index evaluation
-* Structural code metrics extraction
-* Machine learning based defect risk prediction
-* Web API built with FastAPI
-* Simple frontend interface for uploading code
+- Static code analysis using Python AST
+- Cyclomatic Complexity calculation
+- Halstead Metrics computation
+- Maintainability Index evaluation
+- Structural code metrics extraction
+- **ML-based defect risk prediction** (Low / Medium / High Risk with confidence %)
+- **Google Gemini AI tips** — actionable suggestions based on real metrics
+- JWT authentication — Signup, Login, protected routes
+- FastAPI backend with PostgreSQL
+- React + Vite frontend with interactive charts
 
 ---
 
 ## Project Architecture
 
-User Uploads Code
-↓
-FastAPI Backend
-↓
-AST Code Parser
-↓
-Metric Extraction Engine
-↓
-Complexity Calculations
-↓
-Machine Learning Prediction
-↓
-Analysis Report
+```
+User Uploads Code / Pastes Code
+        ↓
+  React Frontend (Vite)
+        ↓
+  FastAPI Backend (Port 9000)
+        ↓
+  JWT Auth Middleware
+        ↓
+  AST Code Parser
+        ↓
+  Metric Extraction Engine
+        ↓
+  ML Defect Risk Prediction
+        ↓
+  Gemini AI Tip Generation
+        ↓
+  Analysis Results Dashboard
+```
 
 ---
 
 ## Metrics Calculated
 
 ### Size Metrics
-
-* Lines of Code (LOC)
-* Blank lines
-* Comment lines
+- Lines of Code (LOC)
+- Blank lines
+- Comment lines
 
 ### Structural Metrics
-
-* Number of functions
-* Number of classes
-* Loops
-* Conditional statements
-* Return statements
-* Try blocks
+- Number of functions
+- Number of classes
+- Loops
+- Conditional statements
+- Return statements
+- Try blocks
 
 ### Complexity Metrics
-
-* Cyclomatic Complexity
-* Nesting Depth
+- Cyclomatic Complexity
+- Max Nesting Depth
 
 ### Halstead Metrics
-
-* Vocabulary
-* Length
-* Volume
-* Difficulty
-* Effort
+- Vocabulary
+- Length
+- Volume
+- Difficulty
+- Effort
 
 ### Maintainability Metrics
+- Maintainability Index (0–100)
+- Rating (Excellent / Moderate / Poor)
 
-* Maintainability Index
-* Comment Ratio
+---
+
+## ML Integration
+
+The system uses a trained machine learning model (`ml/predictor.py`) to predict defect risk based on code metrics.
+
+**Input features:**
+- Cyclomatic Complexity
+- Maintainability Index
+- Lines of Code
+- Halstead metrics
+
+**Output:**
+- Risk Level: `Low` / `Medium` / `High`
+- Confidence score (%)
+
+---
+
+## AI Tips (Google Gemini)
+
+After each analysis, the frontend calls the **Google Gemini 2.5 Flash API** to generate a real, context-aware tip based on the actual metrics of the analyzed code.
+
+**Example tip:**
+> "Your Maintainability Index is poor, likely due to excessive fragmentation. Consolidate very small, tightly coupled functions to improve code flow and reduce cognitive load."
 
 ---
 
 ## Project Structure
 
-AI_code_complexity_analyzer
-
+```
+Codelens/
 │
-├── analyzer
+├── analyzer/
 │   ├── ast_parser.py
 │   ├── structure_metrics.py
 │   ├── size_metrics.py
@@ -88,86 +124,134 @@ AI_code_complexity_analyzer
 │   ├── maintainability.py
 │   └── analyzer.py
 │
-
-├── api
+├── api/
+│   ├── models/
+│   │   ├── user.py
+│   │   ├── analysis.py
+│   │   └── metrics.py
+│   ├── schemas/
+│   │   └── analysis_schema.py
+│   ├── auth.py
+│   ├── database.py
 │   └── main.py
 │
-
-├── models
-│   └── ml_model.py
+├── ml/
+│   └── predictor.py
 │
-
-├── samples
-│   └── sample_code.py
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   └── services/
+│   │       └── api.js
+│   └── .env
 │
-
-├── tests
-│   └── test_analyzer.py
-│
-
-├── data
+├── data/
 │   └── dataset.csv
 │
-
-├── frontend
-│   ├── index.html
-│   ├── script.js
-│   └── style.css
-│
-
+├── .env
 ├── requirements.txt
 └── README.md
+```
 
 ---
 
 ## Installation
 
-Clone the repository
+### Backend
 
-git clone <repository_url>
+```bash
+# Clone the repository
+git clone https://github.com/Bunty5600/Codelens.git
+cd Codelens
 
-Navigate to project directory
+# Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
 
-cd AI_code_complexity_analyzer
-
-Install dependencies
-
+# Install dependencies
 pip install -r requirements.txt
 
-Run the FastAPI server
+# Create .env file (use Notepad on Windows)
+# Add: SECRET_KEY=your_secret_key_here
 
-uvicorn api.main:app --reload
+# Run FastAPI server
+uvicorn api.main:app --port 9000
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Environment Variables
+
+**Backend `.env`:**
+```
+SECRET_KEY=your_secret_key_here
+```
+
+**Frontend `.env`:**
+```
+VITE_API_URL=http://127.0.0.1:9000
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
+```
 
 ---
 
-## Example Output
+## Authentication
 
-Lines of Code: 45
-Functions: 3
-Loops: 2
-If Statements: 4
+The system uses **JWT (JSON Web Tokens)** for authentication.
 
-Cyclomatic Complexity: 7
+- `POST /auth/signup` — Register a new user
+- `POST /auth/login` — Login and receive JWT token
+- Token is stored in `localStorage` and sent with every protected request
 
-Halstead Volume: 210
+---
 
-Maintainability Index: 72
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/signup` | Register new user |
+| POST | `/auth/login` | Login user |
+| POST | `/analyze/code` | Analyze pasted code |
+| POST | `/analyze/upload` | Analyze uploaded file |
+| GET | `/` | Health check |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React, Vite, Tailwind CSS, Recharts |
+| Backend | FastAPI, Python |
+| Database | PostgreSQL, SQLAlchemy |
+| Auth | JWT (python-jose), bcrypt |
+| ML | scikit-learn |
+| AI Tips | Google Gemini 2.5 Flash API |
 
 ---
 
 ## Future Enhancements
 
-* Multi-language support (Java, C++, JavaScript)
-* IDE plugin integration
-* GitHub repository analysis
-* Visualization dashboard
-* Deep learning models for defect prediction
+- Multi-language support (Java, C++, JavaScript, TypeScript)
+- IDE plugin integration (VS Code extension)
+- GitHub repository analysis — analyze entire repos via URL
+- Deep learning models for more accurate defect prediction
+- Code diff analysis — compare before and after refactoring
+- Team dashboard — track code quality across projects
+- Export reports as PDF
+- Email notifications for critical complexity alerts
 
 ---
 
-## ## Author
+## Author
 
-Developed by Bunty Bhainsa  
-Computer Science Engineering Student passionate about AI, Full Stack Development, and Software Engineering.
-
-- GitHub: https://github.com/Bunty5600
+Bunty Bhainsa
+Computer Science Engineering ,Ai full-stack
