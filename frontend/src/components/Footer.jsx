@@ -15,16 +15,16 @@ export default function Footer() {
               <div className="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
                 <Code2 className="w-4 h-4 text-white" strokeWidth={2.5} />
               </div>
-              <span className="font-display font-bold text-base">ComplexIQ</span>
+              <span className="font-display font-bold text-base">CodeLens AI</span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
               AI-powered code complexity analysis. Write cleaner, more maintainable code — instantly.
             </p>
             <div className="flex gap-2 mt-5">
               {[
-                { Icon: Github,   href: '#' },
+                { Icon: Github,   href: 'https://github.com/Bunty5600' },
                 { Icon: Twitter,  href: '#' },
-                { Icon: Linkedin, href: '#' },
+                { Icon: Linkedin, href: 'https://www.linkedin.com/in/bunty-bhainsa-75b6932a4?utm_source=share_via&utm_content=profile&utm_medium=member_android' },
               ].map(({ Icon, href }, i) => (
                 <a key={i} href={href}
                   className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center
@@ -58,7 +58,7 @@ export default function Footer() {
 
         <div className="border-t border-slate-200 dark:border-slate-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-slate-400 flex items-center gap-1">
-            © {year} CodeLens AI. Made with <Heart className="w-3 h-3 text-red-400 fill-current" /> for developers.
+            © {year} CodeLens AI. Made with <Heart className="w-3 h-3 text-red-400 fill-current" /> CodeLens AI — Analyze smarter. Ship cleaner code..
           </p>
           <div className="flex gap-5">
             {['Privacy', 'Terms', 'Cookies'].map(l => (
