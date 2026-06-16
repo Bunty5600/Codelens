@@ -3,7 +3,7 @@ import { Code2, Sun, Moon, LogOut, ChevronDown } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth }  from '../context/AuthContext'
 import { useState } from 'react'
-
+import logo from '../assets/logo.png';
 export default function Navbar({ appMode = false }) {
   const { dark, toggle } = useTheme()
   const { user, logout } = useAuth()
@@ -20,12 +20,16 @@ export default function Navbar({ appMode = false }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
 
         {/* Logo */}
-        <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-2 group">
-          <div className="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-105 transition-transform">
-            <Code2 className="w-4 h-4 text-white" strokeWidth={2.5} />
-          </div>
-          <span className="font-display font-bold text-[1.1rem] tracking-tight">CodeLens AI</span>
-        </Link>
+       <Link
+  to={user ? "/dashboard" : "/"}
+  className="flex items-center"
+>
+<img
+  src={logo}
+  alt="CodeLens AI"
+  className="h-24 w-30 object-contain"
+/>
+</Link>
 
         {/* Right */}
         <div className="flex items-center gap-2">

@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import clsx from 'clsx'
-
+import logo from '../assets/logo.png';
 const NAV = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/upload',    icon: Upload,           label: 'Upload'    },
@@ -23,12 +23,11 @@ export default function Sidebar() {
                       bg-white dark:bg-slate-950 px-3 py-5">
 
       {/* Logo */}
-      <div className="flex items-center gap-2 px-3 mb-7">
-        <div className="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-          <Code2 className="w-4 h-4 text-white" strokeWidth={2.5} />
-        </div>
-        <span className="font-display font-bold text-base tracking-tight">ComplexIQ</span>
-      </div>
+      <img
+  src={logo}
+  alt="CodeLens AI"
+  className="h-24 w-auto object-contain"
+/>
 
       {/* Section label */}
       <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-2">

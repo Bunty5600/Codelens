@@ -43,7 +43,7 @@ class HalsteadVisitor(ast.NodeVisitor):
         self.total_operators += 1
         self.generic_visit(node)
 
-    # ---------- Operands ----------
+    # ---------- Operands -----------
     def visit_Name(self, node: ast.Name):
         self.operands.add(node.id)
         self.total_operands += 1

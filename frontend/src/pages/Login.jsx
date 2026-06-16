@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext'
 import { Sun, Moon } from 'lucide-react'
 import Alert from '../components/Alert'
 import { authAPI } from '../services/api'
+import logo from '../assets/logo.png';
 
 export default function Login() {
   const { login } = useAuth()
@@ -58,13 +59,17 @@ const handleSubmit = async (e) => {
           <div className="absolute bottom-20 right-10 w-56 h-56 bg-purple-500/10 rounded-full blur-3xl" />
         </div>
 
-        <Link to="/" className="flex items-center gap-2 z-10">
-          <div className="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center">
-            <Code2 className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </div>
-          <span className="font-display font-bold text-white text-xl">CodeLens AI</span>
-        </Link>
+     <Link
 
+  className="flex items-center"
+>
+ <img
+  src={logo}
+  alt="CodeLens AI"
+  className="h-24 w-auto object-contain"
+/>
+</Link
+>
         <div className="z-10">
           <blockquote className="text-2xl font-display font-semibold text-white leading-snug mb-4">
             "ComplexIQ turned code reviews from a bottleneck into a superpower."
