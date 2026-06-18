@@ -21,18 +21,29 @@ const CONFIG = {
   },
 }
 
-export default function Alert({ type = 'info', message, autoClose = 0, onClose }) {
+export default function Alert({
+  type = 'info',
+  message = '',
+  autoClose = 0,
+  onClose,
+}) {
   const [visible, setVisible] = useState(true)
-  const { icon: Icon, cls } = CONFIG[type] || CONFIG.info
+
+  // Fall back to 'info' if an unknown type is passed
+  const safeType  = CONFIG[type] ? type : 'info'
+  const { icon: Icon, cls } = CONFIG[safeType]
 
   useEffect(() => {
     if (autoClose > 0) {
-      const t = setTimeout(() => { setVisible(false); onClose?.() }, autoClose)
+      const t = setTimeout(() => {
+        setVisible(false)
+        onClose?.()
+      }, autoClose)
       return () => clearTimeout(t)
     }
   }, [autoClose, onClose])
 
-  if (!visible) return null
+  if (!visible || !message) return null
 
   return (
     <div className={clsx(
@@ -42,8 +53,10 @@ export default function Alert({ type = 'info', message, autoClose = 0, onClose }
       <Icon className="w-4 h-4 shrink-0 mt-0.5" />
       <p className="flex-1 text-sm font-medium leading-relaxed">{message}</p>
       <button
+        type="button"
         onClick={() => { setVisible(false); onClose?.() }}
         className="opacity-50 hover:opacity-100 transition-opacity shrink-0"
+        aria-label="Dismiss"
       >
         <X className="w-4 h-4" />
       </button>

@@ -19,30 +19,34 @@ export default function MetricCard({
   value,
   unit,
   description,
-  level = 'neutral',   // 'good' | 'warning' | 'danger' | 'neutral'
+  level = 'neutral',
   icon: Icon,
-  trend,               // optional: { value: '+12%', up: true }
+  trend,
   className = '',
 }) {
+  const safeLevel = levelStyles[level] ? level : 'neutral'
+
   return (
     <div className={clsx('card p-5 hover:shadow-md transition-all duration-200 group', className)}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           {Icon && (
-            <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center', levelStyles[level])}>
+            <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center', levelStyles[safeLevel])}>
               <Icon className="w-4 h-4" />
             </div>
           )}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              {title}
+            </p>
           </div>
         </div>
 
         {/* Level badge */}
-        <span className={clsx('badge text-xs capitalize', levelStyles[level])}>
-          <span className={clsx('w-1.5 h-1.5 rounded-full', dotColors[level])} />
-          {level}
+        <span className={clsx('badge text-xs capitalize', levelStyles[safeLevel])}>
+          <span className={clsx('w-1.5 h-1.5 rounded-full', dotColors[safeLevel])} />
+          {safeLevel}
         </span>
       </div>
 

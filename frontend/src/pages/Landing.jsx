@@ -42,17 +42,29 @@ const FEATURES = [
   },
 ]
 
-const STATS = [
-  { label: 'Lines Analyzed',   value: '2.4B+', icon: Code      },
-  { label: 'Projects Scanned', value: '180K+', icon: GitBranch },
-  { label: 'Teams Using',      value: '3.2K+', icon: Users     },
-  { label: 'Avg Score Boost',  value: '+34%',  icon: TrendingUp },
+const STATS =  [
+  { label: 'AST Analysis',           value: 'Python', icon: Code },
+  { label: 'Metrics Calculated',     value: '10+',    icon: GitBranch },
+  { label: 'Authentication',         value: 'JWT',    icon: Users },
+  { label: 'Analysis Speed',         value: '<1s',    icon: TrendingUp },
 ]
 
 const TESTIMONIALS = [
-  { name: 'Riya Sharma',   role: 'Senior SWE @ Flipkart',      text: 'CodeLens AI cut our code review time in half. The maintainability scores are spot-on.' },
-  { name: 'Carlos Medina', role: 'Tech Lead @ Nubank',          text: 'The Halstead metrics caught complexity debt we had been ignoring for months.' },
-  { name: 'Priya Iyer',    role: 'Engineering Mgr @ Razorpay',  text: "Our team's average MI score jumped 28 points in just two sprints." },
+  {
+    name: 'Python AST Analysis',
+    role: 'Core Engine',
+    text: 'Parses source code into Abstract Syntax Trees and extracts structural information for deeper code analysis.'
+  },
+  {
+    name: 'Complexity Metrics',
+    role: 'Code Quality',
+    text: 'Calculates Cyclomatic Complexity, Halstead Metrics, and Maintainability Index to identify risky code.'
+  },
+  {
+    name: 'Future Roadmap',
+    role: 'Coming Soon',
+    text: 'GitHub Repository Analysis, AI Refactoring Suggestions, PDF Export Reports, and VS Code Extension.'
+  },
 ]
 
 // ── Animated score dial ───────────────────────────────────────────────────────
@@ -198,7 +210,7 @@ export default function Landing() {
               className="w-2 h-2 rounded-full bg-emerald-500"
               style={{ animation: 'badgePulse 2s infinite' }}
             />
-            Trusted by 3,200+ engineering teams
+            Python Static Analysis Platform
           </div>
 
           {/* Headline */}
@@ -233,7 +245,7 @@ export default function Landing() {
           </div>
 
           <p className="text-sm text-slate-400 mt-6 animate-fade-up delay-400">
-            No credit card required · Free tier available · Open API
+            No credit card required · Free tier available
           </p>
         </div>
 
@@ -336,17 +348,14 @@ export default function Landing() {
       <section className="py-20 bg-slate-50 dark:bg-slate-900/30 border-y border-slate-200 dark:border-slate-800">
         <div className="max-w-5xl mx-auto px-6">
           <h2 className="text-3xl font-display font-bold text-center mb-12 text-slate-900 dark:text-white">
-            Loved by engineering teams
+            More.....
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {TESTIMONIALS.map(({ name, role, text }) => (
               <TiltCard
                 key={name}
-                className="card p-6 hover:shadow-lg transition-shadow duration-300"
+                className="card p-6 hover:shadow-lg transition-shadow duration-1200"
               >
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 text-yellow-400 fill-current" />)}
-                </div>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-5">"{text}"</p>
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">{name}</p>

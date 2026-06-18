@@ -17,9 +17,11 @@ class StructureMetricsVisitor(ast.NodeVisitor):
             "try_blocks": 0,
         }
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+    def visit_FunctionDef(self, node):
         self.metrics["functions"] += 1
         self.generic_visit(node)
+
+    visit_AsyncFunctionDef = visit_FunctionDef
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self.metrics["classes"] += 1

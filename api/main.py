@@ -14,6 +14,10 @@ from fastapi import HTTPException
 from api.auth import hash_password, verify_password, create_token
 from api.schemas.analysis_schema import SignupRequest, LoginRequest
 from ml.predictor import predict_defect_risk
+import zipfile
+import tempfile
+from fastapi import UploadFile,File
+import httpx
 
 
 app = FastAPI()
@@ -90,7 +94,7 @@ def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
 
         "halstead": result.get("halstead", {})
     })
-    print(result)  # Keep this so you can verify keys in terminal
+    print(result)
 
     db_user = db.query(user.User).first()
     if not db_user:
@@ -151,7 +155,266 @@ def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
         },
         "ml_prediction": ml_prediction
     }
+@app.post("/analyze/upload")
+async def analyze_upload(file: UploadFile = File(...)):
 
+    print("FILE RECEIVED:", file.filename)
+
+    try:
+
+        # ==========================
+        # ZIP PROJECT ANALYSIS
+        # ==========================
+        if file.filename.endswith(".zip"):
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+
+                zip_path = os.path.join(temp_dir, file.filename)
+
+                with open(zip_path, "wb") as buffer:
+                    buffer.write(await file.read())
+
+                with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                    zip_ref.extractall(temp_dir)
+
+                total_cc = 0
+                total_loc = 0
+                total_functions = 0
+                total_volume = 0
+                total_effort = 0
+                mi_values = []
+
+                files_analyzed = 0
+
+                for root, dirs, files in os.walk(temp_dir):
+
+                    for filename in files:
+
+                        # Python only for now
+                        if filename.endswith(".py"):
+
+                            try:
+
+                                path = os.path.join(root, filename)
+
+                                with open(
+                                    path,
+                                    "r",
+                                    encoding="utf-8",
+                                    errors="ignore"
+                                ) as f:
+
+                                    code = f.read()
+
+                                result = analyze_code(code)
+
+                                total_cc += result.get(
+                                    "complexity",
+                                    {}
+                                ).get(
+                                    "cyclomatic_complexity",
+                                    0
+                                )
+
+                                total_loc += result.get(
+                                    "size",
+                                    {}
+                                ).get(
+                                    "loc",
+                                    0
+                                )
+
+                                total_functions += result.get(
+                                    "structure",
+                                    {}
+                                ).get(
+                                    "functions",
+                                    0
+                                )
+
+                                total_volume += result.get(
+                                    "halstead",
+                                    {}
+                                ).get(
+                                    "volume",
+                                    0
+                                )
+
+                                total_effort += result.get(
+                                    "halstead",
+                                    {}
+                                ).get(
+                                    "effort",
+                                    0
+                                )
+
+                                mi_values.append(
+                                    result.get(
+                                        "maintainability",
+                                        {}
+                                    ).get(
+                                        "maintainability_index",
+                                        0
+                                    )
+                                )
+
+                                files_analyzed += 1
+
+                            except Exception as e:
+                                print(
+                                    f"FILE ERROR: {filename}",
+                                    str(e)
+                                )
+
+                if files_analyzed == 0:
+                    return {
+                        "error": "No Python files found in ZIP."
+                    }
+
+                avg_mi = (
+                    sum(mi_values) / len(mi_values)
+                )
+
+                ml_prediction = predict_defect_risk({
+                    "cc": total_cc,
+                    "mi": avg_mi,
+                    "loc": total_loc,
+                    "halstead": {
+                        "volume": total_volume,
+                        "effort": total_effort
+                    }
+                })
+
+                return {
+                    "metrics": {
+                        "cc": total_cc,
+                        "mi": round(avg_mi, 2),
+                        "loc": total_loc,
+                        "functions": total_functions,
+                        "halstead": {
+                            "volume": total_volume,
+                            "effort": total_effort
+                        }
+                    },
+                    "ml_prediction": ml_prediction
+                }
+
+        # ==========================
+        # SINGLE PYTHON FILE
+        # ==========================
+        content = await file.read()
+
+        code = content.decode(
+            "utf-8",
+            errors="ignore"
+        )
+
+        result = analyze_code(code)
+
+        ml_prediction = predict_defect_risk({
+            "cc": result.get(
+                "complexity",
+                {}
+            ).get(
+                "cyclomatic_complexity",
+                0
+            ),
+
+            "mi": result.get(
+                "maintainability",
+                {}
+            ).get(
+                "maintainability_index",
+                0
+            ),
+
+            "loc": result.get(
+                "size",
+                {}
+            ).get(
+                "loc",
+                0
+            ),
+
+            "halstead": result.get(
+                "halstead",
+                {}
+            )
+        })
+
+        return {
+            "metrics": {
+
+                "cc": result.get(
+                    "complexity",
+                    {}
+                ).get(
+                    "cyclomatic_complexity",
+                    0
+                ),
+
+                "mi": result.get(
+                    "maintainability",
+                    {}
+                ).get(
+                    "maintainability_index",
+                    0
+                ),
+
+                "loc": result.get(
+                    "size",
+                    {}
+                ).get(
+                    "loc",
+                    0
+                ),
+
+                "functions": result.get(
+                    "structure",
+                    {}
+                ).get(
+                    "functions",
+                    0
+                ),
+
+                "halstead": result.get(
+                    "halstead",
+                    {}
+                )
+            },
+
+            "ml_prediction": ml_prediction
+        }
+
+    except Exception as e:
+
+        print("UPLOAD ERROR:", str(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+
+@app.post("/ai-tip")
+async def get_ai_tip(payload: dict):
+    groq_key = os.getenv("GROQ_API_KEY")
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {groq_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [{"role": "user", "content": payload.get("prompt")}],
+                "temperature": 0.3,
+                "max_tokens": 120
+            }
+        )
+        return response.json()
 @app.get("/test-db")
 def test_db(db: Session = Depends(get_db)):
     return {"message": "DB dependency working"}

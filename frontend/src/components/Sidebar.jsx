@@ -1,11 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Upload, BarChart2, User,
-  Code2, LogOut, ChevronRight
+  LogOut, ChevronRight
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import clsx from 'clsx'
-import logo from '../assets/logo.png';
+import logo from '../assets/logo.png'
+
 const NAV = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/upload',    icon: Upload,           label: 'Upload'    },
@@ -17,6 +18,11 @@ export default function Sidebar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
   return (
     <aside className="hidden md:flex flex-col w-56 shrink-0 min-h-screen
                       border-r border-slate-200 dark:border-slate-800
@@ -24,10 +30,10 @@ export default function Sidebar() {
 
       {/* Logo */}
       <img
-  src={logo}
-  alt="CodeLens AI"
-  className="h-24 w-auto object-contain"
-/>
+        src={logo}
+        alt="CodeLens AI"
+        className="h-24 w-auto object-contain"
+      />
 
       {/* Section label */}
       <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-2">
@@ -58,16 +64,21 @@ export default function Sidebar() {
       <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-2 space-y-1">
         <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900">
           <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {user?.name?.[0]?.toUpperCase() || 'U'}
+            {user?.name?.[0]?.toUpperCase() ?? 'U'}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-tight truncate">{user?.name || 'User'}</p>
-            <p className="text-xs text-slate-400 truncate">{user?.email || ''}</p>
+            <p className="text-sm font-semibold leading-tight truncate">
+              {user?.name ?? 'User'}
+            </p>
+            <p className="text-xs text-slate-400 truncate">
+              {user?.email ?? ''}
+            </p>
           </div>
         </div>
 
         <button
-          onClick={() => { logout(); navigate('/') }}
+          type="button"
+          onClick={handleLogout}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-slate-500
                      hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all"
         >
