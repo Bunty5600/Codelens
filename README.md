@@ -1,257 +1,304 @@
-# CodeLens AI — Code Complexity Analyzer
+# CodeLens AI
 
-CodeLens AI is a full-stack code quality analysis platform that evaluates software complexity, maintainability, and defect risk using static code analysis, machine learning, and AI-powered insights.
+### Enterprise Code Quality & Maintainability Analyzer
 
----
+CodeLens AI is an AI-powered code quality analysis platform that evaluates software complexity, maintainability, defect risk, and technical debt using static analysis, machine learning, and large language models.
 
-## What's New
-
-- JWT-based authentication (Signup & Login)
-- ML defect risk prediction with confidence scores
-- Google Gemini AI-powered code quality tips
-- PostgreSQL database integration
-- React + Vite frontend with dark mode
+It provides developers with actionable insights, risk predictions, and AI-driven refactoring recommendations to improve software quality.
 
 ---
 
-## Features
+## ✨ Key Features
 
-- Static code analysis using Python AST
-- Cyclomatic Complexity calculation
-- Halstead Metrics computation
-- Maintainability Index evaluation
-- Structural code metrics extraction
-- **ML-based defect risk prediction** (Low / Medium / High Risk with confidence %)
-- **Google Gemini AI tips** — actionable suggestions based on real metrics
-- JWT authentication — Signup, Login, protected routes
-- FastAPI backend with PostgreSQL
-- React + Vite frontend with interactive charts
+### Authentication & User Management
+
+* JWT Authentication
+* User Registration & Login
+* Protected API Routes
+* Analysis History Dashboard
+
+### 📊 Static Code Analysis
+
+* Python AST-based analysis
+* Cyclomatic Complexity
+* Halstead Metrics
+* Maintainability Index
+* Structural Metrics Extraction
+
+### Machine Learning
+
+* Defect Risk Prediction
+* Risk Classification:
+
+  * Low Risk
+  * Medium Risk
+  * High Risk
+* Confidence Score Prediction
+
+### 🧠 AI-Powered Insights
+
+Powered by **Groq Llama 3.3 70B**
+
+* Risk Assessment
+* Root Cause Analysis
+* Refactoring Suggestions
+* Architecture Recommendations
+
+### 📈 Code Quality Features
+
+* Code Smell Detection
+* Technical Debt Scoring
+* Complexity Heatmap
+* Quality Gate Evaluation
+* PDF Report Generation
+
+### 📂 Project Analysis
+
+* Source Code Analysis
+* ZIP Project Upload
+* GitHub Repository Analysis
 
 ---
 
-## Project Architecture
+## 🏗️ System Architecture
 
-```
-User Uploads Code / Pastes Code
-        ↓
-  React Frontend (Vite)
-        ↓
-  FastAPI Backend (Port 9000)
-        ↓
-  JWT Auth Middleware
-        ↓
-  AST Code Parser
-        ↓
+```text
+User Code / ZIP Upload / GitHub Repository
+                    │
+                    ▼
+          React + Vite Frontend
+                    │
+                    ▼
+            FastAPI Backend API
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+     JWT Auth   Database   AI Services
+         │
+         ▼
+   AST Code Parsing Engine
+         │
+         ▼
   Metric Extraction Engine
-        ↓
-  ML Defect Risk Prediction
-        ↓
-  Gemini AI Tip Generation
-        ↓
-  Analysis Results Dashboard
+         │
+         ▼
+  Code Smell Detection
+         │
+         ▼
+ Technical Debt Analysis
+         │
+         ▼
+ ML Defect Prediction
+         │
+         ▼
+ Groq AI Recommendations
+         │
+         ▼
+ Quality Gate Evaluation
+         │
+         ▼
+ Dashboard + PDF Reports
 ```
 
 ---
 
-## Metrics Calculated
+## 📊 Metrics Evaluated
 
 ### Size Metrics
-- Lines of Code (LOC)
-- Blank lines
-- Comment lines
+
+* Lines of Code (LOC)
+* Blank Lines
+* Comment Lines
 
 ### Structural Metrics
-- Number of functions
-- Number of classes
-- Loops
-- Conditional statements
-- Return statements
-- Try blocks
+
+* Functions
+* Classes
+* Loops
+* Conditionals
+* Returns
+* Exception Blocks
 
 ### Complexity Metrics
-- Cyclomatic Complexity
-- Max Nesting Depth
+
+* Cyclomatic Complexity
+* Maximum Nesting Depth
 
 ### Halstead Metrics
-- Vocabulary
-- Length
-- Volume
-- Difficulty
-- Effort
+
+* Vocabulary
+* Length
+* Volume
+* Difficulty
+* Effort
 
 ### Maintainability Metrics
-- Maintainability Index (0–100)
-- Rating (Excellent / Moderate / Poor)
+
+* Maintainability Index
+* Code Quality Rating
 
 ---
 
-## ML Integration
+## 🔍 Code Smells
 
-The system uses a trained machine learning model (`ml/predictor.py`) to predict defect risk based on code metrics.
-
-**Input features:**
-- Cyclomatic Complexity
-- Maintainability Index
-- Lines of Code
-- Halstead metrics
-
-**Output:**
-- Risk Level: `Low` / `Medium` / `High`
-- Confidence score (%)
+| Smell               | Threshold  |
+| ------------------- | ---------- |
+| Long Function       | > 50 lines |
+| Too Many Parameters | > 5        |
+| Deep Nesting        | > 3        |
+| Large Class         | > 300 LOC  |
+| High Complexity     | CC > 15    |
 
 ---
 
-## AI Tips (Google Gemini)
+## 📉 Technical Debt
 
-After each analysis, the frontend calls the **Google Gemini 2.5 Flash API** to generate a real, context-aware tip based on the actual metrics of the analyzed code.
+Score Range: **0 – 10**
 
-**Example tip:**
-> "Your Maintainability Index is poor, likely due to excessive fragmentation. Consolidate very small, tightly coupled functions to improve code flow and reduce cognitive load."
+* 0 – 3 → Low Debt
+* 4 – 7 → Medium Debt
+* 8 – 10 → High Debt
 
 ---
 
-## Project Structure
+## 🚦 Quality Gate
 
-```
-Codelens/
+| Condition           | Result  |
+| ------------------- | ------- |
+| CC > 20             | FAIL    |
+| MI < 40             | FAIL    |
+| Debt > 8            | FAIL    |
+| Moderate thresholds | WARNING |
+| Healthy code        | PASS    |
+
+---
+
+## 🧠 Machine Learning Model
+
+### Input Features
+
+* Cyclomatic Complexity
+* Maintainability Index
+* LOC
+* Halstead Metrics
+
+### Output
+
+* Risk Level
+* Confidence Score
+
+---
+
+## 🤖 AI Recommendations
+
+CodeLens uses **Groq Llama 3.3 70B** to generate:
+
+* Risk Summary
+* Root Cause Analysis
+* Refactoring Suggestions
+* Architecture Improvements
+
+---
+
+## 📁 Project Structure
+
+```text
+CodeLens/
 │
 ├── analyzer/
-│   ├── ast_parser.py
-│   ├── structure_metrics.py
-│   ├── size_metrics.py
-│   ├── complexity_metrics.py
-│   ├── halstead_metrics.py
-│   ├── maintainability.py
-│   └── analyzer.py
-│
 ├── api/
-│   ├── models/
-│   │   ├── user.py
-│   │   ├── analysis.py
-│   │   └── metrics.py
-│   ├── schemas/
-│   │   └── analysis_schema.py
-│   ├── auth.py
-│   ├── database.py
-│   └── main.py
-│
+├── services/
 ├── ml/
-│   └── predictor.py
-│
 ├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── context/
-│   │   ├── pages/
-│   │   └── services/
-│   │       └── api.js
-│   └── .env
-│
 ├── data/
-│   └── dataset.csv
-│
-├── .env
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## Installation
+## ⚙️ Installation
 
 ### Backend
 
 ```bash
-# Clone the repository
 git clone https://github.com/Bunty5600/Codelens.git
 cd Codelens
 
-# Create virtual environment
 python -m venv .venv
-.venv\Scripts\activate  # Windows
+.venv\Scripts\activate
 
-# Install dependencies
 pip install -r requirements.txt
 
-# Create .env file (use Notepad on Windows)
-# Add: SECRET_KEY=your_secret_key_here
-
-# Run FastAPI server
-uvicorn api.main:app --port 9000
+uvicorn api.main:app --reload --port 9000
 ```
 
 ### Frontend
 
 ```bash
 cd frontend
+
 npm install
 npm run dev
 ```
 
-### Environment Variables
+---
 
-**Backend `.env`:**
-```
-SECRET_KEY=your_secret_key_here
+## 🔐 Environment Variables
+
+### Backend
+
+```env
+SECRET_KEY=your_secret_key
+DATABASE_URL=postgresql://user:password@localhost/codelens
+GROQ_API_KEY=your_groq_api_key
 ```
 
-**Frontend `.env`:**
-```
+### Frontend
+
+```env
 VITE_API_URL=http://127.0.0.1:9000
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 ---
 
-## Authentication
+## 📡 API Endpoints
 
-The system uses **JWT (JSON Web Tokens)** for authentication.
-
-- `POST /auth/signup` — Register a new user
-- `POST /auth/login` — Login and receive JWT token
-- Token is stored in `localStorage` and sent with every protected request
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/signup` | Register new user |
-| POST | `/auth/login` | Login user |
-| POST | `/analyze/code` | Analyze pasted code |
-| POST | `/analyze/upload` | Analyze uploaded file |
-| GET | `/` | Health check |
+| Method | Endpoint         | Description        |
+| ------ | ---------------- | ------------------ |
+| POST   | /auth/signup     | Register User      |
+| POST   | /auth/login      | Login User         |
+| POST   | /analyze/code    | Analyze Code       |
+| POST   | /analyze/upload  | Analyze ZIP/File   |
+| POST   | /analyze/github  | Analyze Repository |
+| POST   | /analyze/smells  | Detect Smells      |
+| POST   | /analyze/debt    | Technical Debt     |
+| POST   | /ai/refactor     | AI Suggestions     |
+| POST   | /report/generate | Generate PDF       |
+| GET    | /analyze/history | User History       |
 
 ---
 
-## Tech Stack
+## 🛠 Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React, Vite, Tailwind CSS, Recharts |
-| Backend | FastAPI, Python |
-| Database | PostgreSQL, SQLAlchemy |
-| Auth | JWT (python-jose), bcrypt |
-| ML | scikit-learn |
-| AI Tips | Google Gemini 2.5 Flash API |
-
----
-
-## Future Enhancements
-
-- Multi-language support (Java, C++, JavaScript, TypeScript)
-- IDE plugin integration (VS Code extension)
-- GitHub repository analysis — analyze entire repos via URL
-- Deep learning models for more accurate defect prediction
-- Code diff analysis — compare before and after refactoring
-- Team dashboard — track code quality across projects
-- Export reports as PDF
-- Email notifications for critical complexity alerts
+| Layer            | Technology                |
+| ---------------- | ------------------------- |
+| Frontend         | React, Vite, Tailwind CSS |
+| Backend          | FastAPI, Python           |
+| Database         | PostgreSQL, SQLAlchemy    |
+| Authentication   | JWT, bcrypt               |
+| Machine Learning | Scikit-learn              |
+| AI               | Groq Llama 3.3 70B        |
+| PDF Reports      | ReportLab                 |
+| Charts           | Recharts                  |
+| Animation        | Framer Motion             |
 
 ---
 
-## Author
+## 👨‍💻 Author
 
-Bunty Bhainsa
-Computer Science Engineering ,Ai full-stack
+**Bunty Bhainsa**
+Computer Science Engineering Student
+AI Full-Stack Developer
+
+GitHub: https://github.com/Bunty5600
