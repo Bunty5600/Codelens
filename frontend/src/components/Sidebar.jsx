@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Upload, BarChart2, User,
-  LogOut, ChevronRight
+  LogOut, ChevronRight,Clock
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import clsx from 'clsx'
@@ -12,6 +12,7 @@ const NAV = [
   { to: '/upload',    icon: Upload,           label: 'Upload'    },
   { to: '/results',   icon: BarChart2,         label: 'Results'   },
   { to: '/profile',   icon: User,              label: 'Profile'   },
+  { to: '/history', icon: Clock, label: 'History' },
 ]
 
 export default function Sidebar() {

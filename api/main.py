@@ -18,7 +18,14 @@ import zipfile
 import tempfile
 from fastapi import UploadFile,File
 import httpx
-
+from services.analysis_service import analyze_zip
+from api.models.project_files import ProjectFile
+from api.models import project_files  # so SQLAlchemy registers the table
+from services.smell_service import detect_smells
+from services.ai_service import get_refactor_recommendations
+from services.report_service import generate_pdf_report
+from fastapi.responses import Response
+from services.debt_service import calculate_debt_score, debt_label
 
 app = FastAPI()
 
@@ -156,246 +163,85 @@ def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
         "ml_prediction": ml_prediction
     }
 @app.post("/analyze/upload")
-async def analyze_upload(file: UploadFile = File(...)):
-
+async def analyze_upload(file: UploadFile = File(...), db: Session = Depends(get_db)):
     print("FILE RECEIVED:", file.filename)
-
     try:
-
-        # ==========================
-        # ZIP PROJECT ANALYSIS
-        # ==========================
-        if file.filename.endswith(".zip"):
-
-            with tempfile.TemporaryDirectory() as temp_dir:
-
-                zip_path = os.path.join(temp_dir, file.filename)
-
-                with open(zip_path, "wb") as buffer:
-                    buffer.write(await file.read())
-
-                with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                    zip_ref.extractall(temp_dir)
-
-                total_cc = 0
-                total_loc = 0
-                total_functions = 0
-                total_volume = 0
-                total_effort = 0
-                mi_values = []
-
-                files_analyzed = 0
-
-                for root, dirs, files in os.walk(temp_dir):
-
-                    for filename in files:
-
-                        # Python only for now
-                        if filename.endswith(".py"):
-
-                            try:
-
-                                path = os.path.join(root, filename)
-
-                                with open(
-                                    path,
-                                    "r",
-                                    encoding="utf-8",
-                                    errors="ignore"
-                                ) as f:
-
-                                    code = f.read()
-
-                                result = analyze_code(code)
-
-                                total_cc += result.get(
-                                    "complexity",
-                                    {}
-                                ).get(
-                                    "cyclomatic_complexity",
-                                    0
-                                )
-
-                                total_loc += result.get(
-                                    "size",
-                                    {}
-                                ).get(
-                                    "loc",
-                                    0
-                                )
-
-                                total_functions += result.get(
-                                    "structure",
-                                    {}
-                                ).get(
-                                    "functions",
-                                    0
-                                )
-
-                                total_volume += result.get(
-                                    "halstead",
-                                    {}
-                                ).get(
-                                    "volume",
-                                    0
-                                )
-
-                                total_effort += result.get(
-                                    "halstead",
-                                    {}
-                                ).get(
-                                    "effort",
-                                    0
-                                )
-
-                                mi_values.append(
-                                    result.get(
-                                        "maintainability",
-                                        {}
-                                    ).get(
-                                        "maintainability_index",
-                                        0
-                                    )
-                                )
-
-                                files_analyzed += 1
-
-                            except Exception as e:
-                                print(
-                                    f"FILE ERROR: {filename}",
-                                    str(e)
-                                )
-
-                if files_analyzed == 0:
-                    return {
-                        "error": "No Python files found in ZIP."
-                    }
-
-                avg_mi = (
-                    sum(mi_values) / len(mi_values)
-                )
-
-                ml_prediction = predict_defect_risk({
-                    "cc": total_cc,
-                    "mi": avg_mi,
-                    "loc": total_loc,
-                    "halstead": {
-                        "volume": total_volume,
-                        "effort": total_effort
-                    }
-                })
-
-                return {
-                    "metrics": {
-                        "cc": total_cc,
-                        "mi": round(avg_mi, 2),
-                        "loc": total_loc,
-                        "functions": total_functions,
-                        "halstead": {
-                            "volume": total_volume,
-                            "effort": total_effort
-                        }
-                    },
-                    "ml_prediction": ml_prediction
-                }
-
-        # ==========================
-        # SINGLE PYTHON FILE
-        # ==========================
         content = await file.read()
 
-        code = content.decode(
-            "utf-8",
-            errors="ignore"
-        )
+        if file.filename.endswith(".zip"):
+            project_name = file.filename.replace(".zip", "")
+            result = analyze_zip(content, project_name)
 
-        result = analyze_code(code)
+            if "error" in result:
+                raise HTTPException(status_code=400, detail=result["error"])
 
-        ml_prediction = predict_defect_risk({
-            "cc": result.get(
-                "complexity",
-                {}
-            ).get(
-                "cyclomatic_complexity",
-                0
-            ),
-
-            "mi": result.get(
-                "maintainability",
-                {}
-            ).get(
-                "maintainability_index",
-                0
-            ),
-
-            "loc": result.get(
-                "size",
-                {}
-            ).get(
-                "loc",
-                0
-            ),
-
-            "halstead": result.get(
-                "halstead",
-                {}
+            # Save Analysis record
+            db_user = db.query(user.User).first()
+            db_analysis = analysis.Analysis(
+                filename=file.filename,
+                language="python",
+                project_name=result["project_name"],
+                risk_level=result["overall_risk"],
+                user_id=db_user.id
             )
-        })
+            db.add(db_analysis)
+            db.commit()
+            db.refresh(db_analysis)
 
+            # Save per-file records
+            for f in result["files"]:
+                pf = ProjectFile(
+                    analysis_id=db_analysis.id,
+                    file_name=f["file_name"],
+                    cc=f["cc"],
+                    mi=f["mi"],
+                    loc=f["loc"],
+                    functions=f["functions"],
+                    risk=f["risk"]
+                )
+                db.add(pf)
+            db.commit()
+
+            agg = result["aggregate"]
+            ml_prediction = predict_defect_risk({
+                "cc": agg["cc"],
+                "mi": agg["mi"],
+                "loc": agg["loc"],
+                "halstead": agg["halstead"]
+            })
+
+            return {
+                "analysis_id": db_analysis.id,
+                "project_name": result["project_name"],
+                "overall_risk": result["overall_risk"],
+                "files": result["files"],
+                "aggregate": agg,
+                "ml_prediction": ml_prediction
+            }
+
+        # Single file fallback
+        code = content.decode("utf-8", errors="ignore")
+        result = analyze_code(code)
+        ml_prediction = predict_defect_risk({
+            "cc": result.get("complexity", {}).get("cyclomatic_complexity", 0),
+            "mi": result.get("maintainability", {}).get("maintainability_index", 0),
+            "loc": result.get("size", {}).get("loc", 0),
+            "halstead": result.get("halstead", {})
+        })
         return {
             "metrics": {
-
-                "cc": result.get(
-                    "complexity",
-                    {}
-                ).get(
-                    "cyclomatic_complexity",
-                    0
-                ),
-
-                "mi": result.get(
-                    "maintainability",
-                    {}
-                ).get(
-                    "maintainability_index",
-                    0
-                ),
-
-                "loc": result.get(
-                    "size",
-                    {}
-                ).get(
-                    "loc",
-                    0
-                ),
-
-                "functions": result.get(
-                    "structure",
-                    {}
-                ).get(
-                    "functions",
-                    0
-                ),
-
-                "halstead": result.get(
-                    "halstead",
-                    {}
-                )
+                "cc": result.get("complexity", {}).get("cyclomatic_complexity", 0),
+                "mi": result.get("maintainability", {}).get("maintainability_index", 0),
+                "loc": result.get("size", {}).get("loc", 0),
+                "functions": result.get("structure", {}).get("functions", 0),
+                "halstead": result.get("halstead", {})
             },
-
             "ml_prediction": ml_prediction
         }
 
     except Exception as e:
-
         print("UPLOAD ERROR:", str(e))
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
-
-
+        raise HTTPException(status_code=500, detail=str(e))
 @app.post("/ai-tip")
 async def get_ai_tip(payload: dict):
     groq_key = os.getenv("GROQ_API_KEY")
@@ -415,6 +261,83 @@ async def get_ai_tip(payload: dict):
             }
         )
         return response.json()
+
+
+@app.post("/analyze/smells")
+def get_smells(data: AnalyzeRequest):
+    from analyzer.ast_parser import parse_code
+    from analyzer.complexity_metrics import get_complexity_metrics
+
+    tree = parse_code(data.code)
+    if not tree:
+        raise HTTPException(status_code=400, detail="Invalid Python code")
+
+    complexity = get_complexity_metrics(tree)
+    cc = complexity.get("cyclomatic_complexity", 0)
+    max_nesting = complexity.get("max_nesting_depth", 0)
+
+    smells = detect_smells(data.code, cc, max_nesting)
+    return {"smells": smells}
+@app.post("/ai/refactor")
+async def ai_refactor(payload: dict):
+    result = await get_refactor_recommendations(
+        cc=payload.get("cc", 0),
+        mi=payload.get("mi", 0),
+        loc=payload.get("loc", 0),
+        functions=payload.get("functions", 0),
+        halstead=payload.get("halstead", {}),
+        smells=payload.get("smells", [])
+    )
+    return result
+@app.post("/report/generate")
+async def generate_report(payload: dict):
+    pdf_bytes = generate_pdf_report(
+        project_name=payload.get("project_name", "Project"),
+        aggregate=payload.get("aggregate", {}),
+        files=payload.get("files", []),
+        smells=payload.get("smells", []),
+        ai_insights=payload.get("ai_insights", {}),
+        ml_prediction=payload.get("ml_prediction", {}),
+        debt_score=payload.get("debt_score", None)
+    )
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=codelens_report.pdf"}
+    )
+@app.post("/analyze/debt")
+def get_debt(payload: dict):
+    score = calculate_debt_score(
+        cc=payload.get("cc", 0),
+        mi=payload.get("mi", 0),
+        halstead_volume=payload.get("halstead_volume", 0),
+        smells=payload.get("smells", []),
+        loc=payload.get("loc", 0)
+    )
+    return {
+        "technical_debt": score,
+        "label": debt_label(score)
+    }
+@app.get("/analyze/history")
+def get_history(db: Session = Depends(get_db)):
+    db_user = db.query(user.User).first()
+    if not db_user:
+        return []
+    analyses = db.query(analysis.Analysis)\
+        .filter(analysis.Analysis.user_id == db_user.id)\
+        .order_by(analysis.Analysis.created_at.desc())\
+        .limit(20)\
+        .all()
+    return [
+        {
+            "id":           a.id,
+            "filename":     a.filename,
+            "project_name": a.project_name,
+            "risk_level":   a.risk_level,
+            "created_at":   a.created_at,
+        }
+        for a in analyses
+    ]
 @app.get("/test-db")
 def test_db(db: Session = Depends(get_db)):
     return {"message": "DB dependency working"}
