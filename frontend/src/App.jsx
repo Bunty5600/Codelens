@@ -13,6 +13,7 @@ import Upload    from './pages/Upload'
 import Results   from './pages/Results.jsx'
 import Profile   from './pages/Profile'
 import History from './pages/History'
+import GitHub from './pages/GitHub'
 
 import './App.css'
 
@@ -35,6 +36,7 @@ function AppRoutes() {
       <Route path="/results"   element={<PrivateRoute><Results /></PrivateRoute>} />
       <Route path="/profile"   element={<PrivateRoute><Profile /></PrivateRoute>} />
       <Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
+       <Route path="/github" element={<PrivateRoute><GitHub /></PrivateRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

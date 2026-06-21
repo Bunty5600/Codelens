@@ -26,6 +26,7 @@ from services.ai_service import get_refactor_recommendations
 from services.report_service import generate_pdf_report
 from fastapi.responses import Response
 from services.debt_service import calculate_debt_score, debt_label
+from services.github_service import analyze_github_repo
 
 app = FastAPI()
 
@@ -338,6 +339,31 @@ def get_history(db: Session = Depends(get_db)):
         }
         for a in analyses
     ]
+@app.post("/analyze/github")
+async def analyze_github(payload: dict, db: Session = Depends(get_db)):
+    repo_url = payload.get("repo_url", "").strip()
+    if not repo_url:
+        raise HTTPException(status_code=400, detail="repo_url is required")
+
+    result = analyze_github_repo(repo_url)
+
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    # Save to DB
+    db_user = db.query(user.User).first()
+    db_analysis = analysis.Analysis(
+        filename=result["repository"],
+        language="python",
+        project_name=result["repository"],
+        risk_level=result["overall_risk"],
+        repo_url=repo_url,
+        user_id=db_user.id
+    )
+    db.add(db_analysis)
+    db.commit()
+
+    return result
 @app.get("/test-db")
 def test_db(db: Session = Depends(get_db)):
     return {"message": "DB dependency working"}

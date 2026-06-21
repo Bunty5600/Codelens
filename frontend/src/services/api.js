@@ -35,5 +35,6 @@ export const analysisAPI = {
   aiRefactor:  (data)     => API.post('/ai/refactor', data),
   generateReport: (data) => API.post('/report/generate', data, { responseType: 'blob' }),
   getDebt: (data) => API.post('/analyze/debt', data),
+  analyzeGithub: (data) => API.post('/analyze/github', data),
 }
 export default API
