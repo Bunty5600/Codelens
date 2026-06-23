@@ -1,19 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 // Context
-import { ThemeProvider } from './context/ThemeContext'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext.jsx'
+import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 
 // Pages
 import Landing   from './pages/Landing'
 import Login     from './pages/Login'
 import Signup    from './pages/Signup'
 import Dashboard from './pages/Dashboard'
-import Upload    from './pages/Upload'
+import Upload    from './pages/Upload.jsx'
 import Results   from './pages/Results.jsx'
-import Profile   from './pages/Profile'
+import Profile   from './pages/Profile.jsx'
 import History from './pages/History'
-import GitHub from './pages/GitHub'
+import GitHub from './pages/GitHub.jsx'
 
 import './App.css'
 

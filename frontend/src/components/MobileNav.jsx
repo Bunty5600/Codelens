@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Upload, BarChart2, User,
   LogOut, Clock, GitBranch, Menu, X
 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/AuthContext.jsx'
 import clsx from 'clsx'
 import logo from '../assets/logo.png'
 

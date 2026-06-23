@@ -15,7 +15,7 @@ import ProjectExplorer  from '../components/ProjectExplorer'
 import CodeSmells       from '../components/CodeSmells'
 import HeatmapTable     from '../components/HeatmapTable'
 import DebtGauge        from '../components/DebtGauge'
-import { useTheme }     from '../context/ThemeContext'
+import { useTheme }     from '../context/ThemeContext.jsx'
 import { analysisAPI }  from '../services/api'
 import { Sun, Moon }    from 'lucide-react'
 

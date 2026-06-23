@@ -10,8 +10,8 @@ import {
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts'
 import Sidebar   from '../components/Sidebar'
-import { useAuth }  from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
+import { useAuth }  from '../context/AuthContext.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 import { analysisAPI } from '../services/api'
 import { Sun, Moon } from 'lucide-react'
 import MobileNav from '../components/MobileNav'

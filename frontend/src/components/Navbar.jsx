@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Code2, Sun, Moon, LogOut, ChevronDown } from 'lucide-react'
-import { useTheme } from '../context/ThemeContext'
-import { useAuth }  from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext.jsx'
+import { useAuth }  from '../context/AuthContext.jsx'
 import { useState } from 'react'
 import logo from '../assets/logo.png';
 export default function Navbar({ appMode = false }) {
