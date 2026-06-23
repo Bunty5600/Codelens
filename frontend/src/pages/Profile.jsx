@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { User, Mail, Calendar, Shield, Save, Loader2 } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
-import Alert   from '../components/Alert'
+import Alert   from '../components/Alert.jsx'
 import { useAuth }  from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { Sun, Moon } from 'lucide-react'

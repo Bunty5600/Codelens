@@ -10,7 +10,7 @@ import {
 import Sidebar          from '../components/Sidebar'
 import MobileNav        from '../components/MobileNav'
 import MetricCard       from '../components/MetricCard'
-import Alert            from '../components/Alert'
+import Alert            from '../components/Alert.jsx'
 import ProjectExplorer  from '../components/ProjectExplorer'
 import CodeSmells       from '../components/CodeSmells'
 import HeatmapTable     from '../components/HeatmapTable'

@@ -4,7 +4,7 @@ import { Eye, EyeOff, Code2, ArrowRight, Loader2, CheckCircle } from 'lucide-rea
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { Sun, Moon } from 'lucide-react'
-import Alert from '../components/Alert'
+import Alert from '../components/Alert.jsx'
 import {authAPI} from '../services/api'
 import logo from '../assets/logo.png'
 
