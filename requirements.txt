@@ -21,7 +21,7 @@ httpcore==1.0.9
 httpx==0.28.1
 idna==3.13
 joblib==1.5.3
-mando==0.8.2
+mando==0.7.1
 markdown-it-py==4.2.0
 mdurl==0.1.2
 numpy==2.4.4
