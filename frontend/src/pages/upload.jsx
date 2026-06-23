@@ -145,8 +145,9 @@ export default function Upload() {
               </p>
               <div className="grid sm:grid-cols-2 gap-2">
                 {[
-                  ['Python files',    '.py'],
+                  ['Python files',    '.py',],
                   ['ZIP archives',    'Multiple files']
+
                 ].map(([label, sub]) => (
                   <div key={label} className="flex items-center gap-2 text-sm">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { GitBranch, Search, Loader2, AlertCircle } from 'lucide-react'
+import { useState,useEffect } from 'react'
+import { GitBranch, Search, Loader2, AlertCircle,X,Sparkles} from 'lucide-react'
 import Sidebar          from '../components/Sidebar'
 import ProjectExplorer  from '../components/ProjectExplorer'
 import HeatmapTable     from '../components/HeatmapTable'
@@ -20,7 +20,10 @@ export default function GitHub() {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
   const [result, setResult]   = useState(null)
-
+  const [showLensy, setShowLensy] = useState(true)
+const closeLensy = () => {
+    setShowLensy(false)
+}
   const handleAnalyze = async () => {
     if (!url.trim()) return
     setError('')
@@ -128,6 +131,7 @@ export default function GitHub() {
                     { label: 'Technical Debt',     value: `${result.debt_score}/10` },
                     { label: 'Highest Risk File',  value: result.highest_risk_file },
                     { label: 'Debt Label',         value: result.debt_label },
+                    { label: 'Languages', value: Object.keys(result.languages ?? {}).join(', ') || 'Python' },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
                       <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{value}</p>
@@ -155,7 +159,128 @@ export default function GitHub() {
               <CodeSmells smells={allSmells} />
             </>
           )}
+{showLensy && (
+  <div className="fixed bottom-6 right-6 z-50 flex items-end gap-4">
 
+    {/* Owl */}
+    <div className="relative">
+      <div className="text-6xl animate-bounce cursor-pointer select-none">
+        🦉
+      </div>
+
+      <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full animate-ping"></div>
+      <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full"></div>
+    </div>
+
+    {/* Chat Bubble */}
+    <div className="relative w-96 rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-500">
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4" />
+          <span className="font-semibold">
+            Lensy AI Assistant
+          </span>
+        </div>
+
+        <button
+          onClick={closeLensy}
+          className="opacity-80 hover:opacity-100"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="p-5">
+
+        <p className="text-sm text-slate-700 dark:text-slate-300">
+          Welcome to GitHub Analyzer.
+          Here's what you can expect from CodeLens AI.
+        </p>
+
+        <div className="mt-4 grid gap-3">
+
+          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 p-3">
+            <p className="font-semibold text-emerald-600 text-sm">
+              ✅ Full Analysis
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Python repositories receive:
+              CC, MI, Halstead metrics,
+              Code Smells and Technical Debt.
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-3">
+            <p className="font-semibold text-blue-600 text-sm">
+              ⚡ Supported Languages
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              JS, TS, JSX, TSX,
+              HTML, CSS, Java and Go.
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 p-3">
+            <p className="font-semibold text-amber-600 text-sm">
+              ⚠ Limitations
+            </p>
+            <ul className="text-xs text-slate-500 mt-1 space-y-1">
+              <li>Large repos may take longer.</li>
+              <li>.next folders are ignored.</li>
+              <li>coverage folders are skipped.</li>
+              <li>JS/React gets basic metrics.</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {[
+            '.py',
+            '.js',
+            '.ts',
+            '.jsx',
+            '.tsx',
+            '.java',
+            '.go'
+          ].map((lang) => (
+            <span
+              key={lang}
+              className="px-2 py-1 rounded-full text-xs bg-slate-100 dark:bg-slate-800"
+            >
+              {lang}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={() =>
+              setUrl("https://github.com/psf/requests.git")
+            }
+            className="btn-primary text-xs"
+          >
+            Try Example
+          </button>
+
+          <button
+            onClick={closeLensy}
+            className="text-xs text-slate-500 hover:text-slate-700"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+
+      {/* Arrow */}
+      <div className="absolute right-[-10px] bottom-8 w-5 h-5 bg-white dark:bg-slate-900 rotate-45 border-r border-b border-slate-200 dark:border-slate-700"></div>
+
+    </div>
+  </div>
+)}
         </main>
       </div>
     </div>

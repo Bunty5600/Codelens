@@ -1,6 +1,5 @@
 import tempfile
 import os
-import subprocess
 from analyzer.analyzer import analyze_code
 from services.smell_service import detect_smells
 from services.debt_service import calculate_debt_score, debt_label
@@ -8,7 +7,56 @@ from services.analysis_service import assign_risk
 from services.quality_gate_service import evaluate_quality_gate
 import git
 
-IGNORE_DIRS = {"node_modules", ".git", "venv", "__pycache__", "build", "dist", ".venv"}
+IGNORE_DIRS = {"node_modules", ".git", "venv", "__pycache__", "build", "dist", ".venv", ".next", "coverage"}
+
+SUPPORTED_EXTENSIONS = ('.py', '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.java', '.go')
+
+def get_language(filename: str) -> str:
+    if filename.endswith('.py'):
+        return 'python'
+    elif filename.endswith(('.js', '.jsx')):
+        return 'javascript'
+    elif filename.endswith(('.ts', '.tsx')):
+        return 'typescript'
+    elif filename.endswith('.java'):
+        return 'java'
+    elif filename.endswith('.go'):
+        return 'go'
+    elif filename.endswith('.html'):
+        return 'html'
+    elif filename.endswith('.css'):
+        return 'css'
+    return 'other'
+
+def basic_metrics(code: str, lang: str) -> dict:
+    lines = code.splitlines()
+    loc = len([l for l in lines if l.strip() and not l.strip().startswith(('//', '#', '/*', '*', '<!--'))])
+
+    # Count functions based on language
+    if lang in ('javascript', 'typescript'):
+        func_count = (
+            code.count('function ') +
+            code.count('=> {') +
+            code.count('=>\n') +
+            code.count('const ') +
+            code.count('async ')
+        )
+        func_count = min(func_count, loc // 5)  # rough cap
+    elif lang == 'java':
+        func_count = code.count('public ') + code.count('private ') + code.count('protected ')
+    elif lang == 'go':
+        func_count = code.count('func ')
+    else:
+        func_count = 0
+
+    return {
+        "cc": 1,
+        "mi": 70,
+        "loc": loc,
+        "functions": max(func_count, 0),
+        "volume": 0,
+        "effort": 0,
+    }
 
 def validate_github_url(url: str) -> bool:
     clean = url.replace(".git", "")
@@ -17,16 +65,10 @@ def validate_github_url(url: str) -> bool:
 
 def clone_repo(url: str, target_dir: str) -> bool:
     try:
-        git.Repo.clone_from(
-            url,
-            target_dir,
-            depth=1,
-            no_checkout=False,
-        )
+        git.Repo.clone_from(url, target_dir, depth=1, no_checkout=False)
         return os.path.exists(target_dir) and len(os.listdir(target_dir)) > 1
     except git.exc.GitCommandError as e:
         print(f"GitPython error: {e}")
-        # Still return True if directory has files despite error
         return os.path.exists(target_dir) and len(os.listdir(target_dir)) > 1
     except Exception as e:
         print(f"Clone error: {e}")
@@ -57,7 +99,6 @@ def analyze_github_repo(repo_url: str) -> dict:
 
         if not success:
             return {"error": "Failed to clone repository. Make sure git is installed and the repository is public."}
-        # DEBUG
         all_files = []
         for root, dirs, files in os.walk(clone_path):
             dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
@@ -70,29 +111,48 @@ def analyze_github_repo(repo_url: str) -> dict:
             dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
 
             for filename in files:
-                if not filename.endswith(".py"):
+                if not filename.endswith(SUPPORTED_EXTENSIONS):
                     continue
+                print(f"ANALYZING: {filename} — lang: {get_language(filename)}")
                 try:
                     path = os.path.join(root, filename)
-                    rel_path = os.path.relpath(path, clone_path)
+                    rel_path = os.path.relpath(path, clone_path).replace("\\", "/")
+                    lang = get_language(filename)
 
                     with open(path, "r", encoding="utf-8", errors="ignore") as f:
                         code = f.read()
 
-                    result = analyze_code(code)
+                    if not code.strip():
+                        continue
 
-                    cc = result.get("complexity", {}).get("cyclomatic_complexity", 0)
-                    mi = result.get("maintainability", {}).get("maintainability_index", 0)
-                    loc = result.get("size", {}).get("loc", 0)
-                    functions = result.get("structure", {}).get("functions", 0)
-                    volume = result.get("halstead", {}).get("volume", 0)
-                    effort = result.get("halstead", {}).get("effort", 0)
+                    if lang == 'python':
+                        result = analyze_code(code)
+                        cc = result.get("complexity", {}).get("cyclomatic_complexity", 0)
+                        mi = result.get("maintainability", {}).get("maintainability_index", 0)
+                        loc = result.get("size", {}).get("loc", 0)
+                        functions = result.get("structure", {}).get("functions", 0)
+                        volume = result.get("halstead", {}).get("volume", 0)
+                        effort = result.get("halstead", {}).get("effort", 0)
+                        smells = detect_smells(code, int(cc),
+                            result.get("complexity", {}).get("max_nesting_depth", 0))
+                    else:
+                        bm = basic_metrics(code, lang)
+                        cc = bm["cc"]
+                        mi = bm["mi"]
+                        loc = bm["loc"]
+                        functions = bm["functions"]
+                        volume = bm["volume"]
+                        effort = bm["effort"]
+                        smells = []
+
+                    if loc == 0:
+                        continue
+
                     risk = assign_risk(cc, mi)
-                    smells = detect_smells(code, int(cc),
-                        result.get("complexity", {}).get("max_nesting_depth", 0))
 
                     file_results.append({
-                        "file_name": rel_path.replace("\\", "/"),
+                        "file_name": rel_path,
+                        "language": lang,
                         "cc": cc,
                         "mi": round(mi, 2),
                         "loc": loc,
@@ -112,7 +172,7 @@ def analyze_github_repo(repo_url: str) -> dict:
                     print(f"FILE ERROR: {filename} — {e}")
 
     if not file_results:
-        return {"error": "No Python files found in repository"}
+        return {"error": "No supported files found in repository"}
 
     avg_mi = sum(mi_values) / len(mi_values)
     avg_cc = total_cc / len(file_results)
@@ -129,6 +189,12 @@ def analyze_github_repo(repo_url: str) -> dict:
 
     highest_risk_file = max(file_results, key=lambda x: x["cc"])
     quality_gate = evaluate_quality_gate(avg_cc, avg_mi, debt_score)
+
+    # Language breakdown
+    lang_counts = {}
+    for f in file_results:
+        l = f.get("language", "other")
+        lang_counts[l] = lang_counts.get(l, 0) + 1
 
     return {
         "repository": repo_name,
@@ -147,4 +213,5 @@ def analyze_github_repo(repo_url: str) -> dict:
         "highest_risk_file": highest_risk_file["file_name"],
         "quality_gate": quality_gate,
         "total_files": len(file_results),
+        "languages": lang_counts,
     }
