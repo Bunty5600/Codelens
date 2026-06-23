@@ -5,10 +5,10 @@ import {
   RefreshCw, ArrowLeft, Loader2, Download
 } from 'lucide-react'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  RadialBarChart, RadialBar, PolarAngleAxis, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts'
 import Sidebar          from '../components/Sidebar'
+import MobileNav        from '../components/MobileNav'
 import MetricCard       from '../components/MetricCard'
 import Alert            from '../components/Alert'
 import ProjectExplorer  from '../components/ProjectExplorer'
@@ -22,15 +22,43 @@ import { Sun, Moon }    from 'lucide-react'
 const miLevel = (v) => v >= 65 ? 'good' : v >= 45 ? 'warning' : 'danger'
 const ccLevel = (v) => v <= 10 ? 'good' : v <= 20 ? 'warning' : 'danger'
 
+// Clean SVG circular gauge — no overlap
+function CircularGauge({ value, color, trackColor }) {
+  const r = 54
+  const circ = 2 * Math.PI * r
+  const pct = Math.min(Math.max(value, 0), 100)
+  const offset = circ - (pct / 100) * circ
+
+  return (
+    <div className="relative w-36 h-36">
+      <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+        <circle cx="60" cy="60" r={r} fill="none" stroke={trackColor} strokeWidth="10" />
+        <circle
+          cx="60" cy="60" r={r} fill="none"
+          stroke={color} strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <p className="text-3xl font-display font-bold leading-none" style={{ color }}>{value}</p>
+        <p className="text-xs text-slate-400 mt-1">/ 100</p>
+      </div>
+    </div>
+  )
+}
+
 export default function Results() {
   const { dark, toggle } = useTheme()
   const navigate = useNavigate()
-  const [data, setData]               = useState(null)
-  const [aiTip, setAiTip]             = useState('')
-  const [tipLoading, setTipLoading]   = useState(false)
-  const [aiRefactor, setAiRefactor]   = useState(null)
+  const [data, setData]                     = useState(null)
+  const [aiTip, setAiTip]                   = useState('')
+  const [tipLoading, setTipLoading]         = useState(false)
+  const [aiRefactor, setAiRefactor]         = useState(null)
   const [refactorLoading, setRefactorLoading] = useState(false)
-  const [pdfLoading, setPdfLoading]   = useState(false)
+  const [pdfLoading, setPdfLoading]         = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('ciq_results')
@@ -40,7 +68,6 @@ export default function Results() {
     }
   }, [])
 
-  // ── Derive metrics ─────────────────────────────────────
   const isProject    = !!data?.files
   const metrics      = isProject ? (data?.aggregate ?? {}) : (data?.metrics ?? {})
   const cc           = metrics.cc        ?? 0
@@ -52,9 +79,7 @@ export default function Results() {
   const debtScore    = data?.debt_score  ?? null
   const debtLabel    = data?.debt_label  ?? ''
   const insights     = Array.isArray(metrics.insights) ? metrics.insights : []
-
-  // collect all smells across files
-  const allSmells = files.flatMap(f => f.smells ?? [])
+  const allSmells    = files.flatMap(f => f.smells ?? [])
 
   const halstead = {
     volume:     metrics.halstead?.volume     ?? 0,
@@ -64,24 +89,19 @@ export default function Results() {
     difficulty: metrics.halstead?.difficulty ?? 0,
   }
 
-  // ── Groq AI Tip ────────────────────────────────────────
   const generateTip = useCallback(async () => {
     setTipLoading(true)
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/ai-tip`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: `You are a Senior Software Architect...
+          prompt: `You are a Senior Software Architect.
 Cyclomatic Complexity: ${cc}
 Maintainability Index: ${mi}
 Lines of Code: ${loc}
 Functions: ${funcs}
 Halstead Volume: ${halstead.volume}
-
 Risk: [Low/Medium/High]
 Issue: [one sentence]
 Fix: [one action]
@@ -89,8 +109,7 @@ Max 50 words. No markdown.`
         })
       })
       const result  = await response.json()
-      const content = result?.choices?.[0]?.message?.content
-      setAiTip(content || 'Unable to generate tip.')
+      setAiTip(result?.choices?.[0]?.message?.content || 'Unable to generate tip.')
     } catch {
       setAiTip('Keep functions small and focused.')
     } finally {
@@ -98,13 +117,11 @@ Max 50 words. No markdown.`
     }
   }, [cc, mi, loc, funcs, halstead.volume])
 
-  // ── AI Refactor ────────────────────────────────────────
   const generateRefactor = useCallback(async () => {
     setRefactorLoading(true)
     try {
       const res = await analysisAPI.aiRefactor({
-        cc, mi, loc, functions: funcs,
-        halstead, smells: allSmells
+        cc, mi, loc, functions: funcs, halstead, smells: allSmells
       })
       setAiRefactor(res.data)
     } catch {
@@ -121,7 +138,6 @@ Max 50 words. No markdown.`
     generateRefactor()
   }, [data])
 
-  // ── PDF Download ───────────────────────────────────────
   const downloadReport = async () => {
     setPdfLoading(true)
     try {
@@ -148,38 +164,39 @@ Max 50 words. No markdown.`
     }
   }
 
-  // ── Empty state ────────────────────────────────────────
   if (!data) {
     return (
       <div className="flex min-h-screen bg-slate-50 dark:bg-[#0a0f1a]">
         <Sidebar />
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-10 text-center">
-          <BarChart2 className="w-12 h-12 text-slate-300" />
-          <h2 className="font-display font-bold text-xl text-slate-700 dark:text-slate-300">No results yet</h2>
-          <p className="text-sm text-slate-400">Run an analysis to see metrics here.</p>
-          <Link to="/upload" className="btn-primary mt-2">
-            <Zap className="w-4 h-4" /> Analyze Code
-          </Link>
+        <div className="flex-1 flex flex-col min-w-0">
+          <MobileNav />
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 p-10 text-center">
+            <BarChart2 className="w-12 h-12 text-slate-300" />
+            <h2 className="font-display font-bold text-xl text-slate-700 dark:text-slate-300">No results yet</h2>
+            <p className="text-sm text-slate-400">Run an analysis to see metrics here.</p>
+            <Link to="/upload" className="btn-primary mt-2"><Zap className="w-4 h-4" /> Analyze Code</Link>
+          </div>
         </div>
       </div>
     )
   }
 
-  const barData = [
-    { name: 'Cyclomatic', value: cc,    fill: cc <= 10 ? '#22c55e' : cc <= 20 ? '#eab308' : '#ef4444' },
-    { name: 'MI Score',   value: mi,    fill: mi >= 65 ? '#22c55e' : mi >= 45 ? '#eab308' : '#ef4444' },
-    { name: 'Functions',  value: funcs, fill: '#8b5cf6' },
-  ]
   const radialFill = mi >= 65 ? '#22c55e' : mi >= 45 ? '#eab308' : '#ef4444'
-  const radialData = [{ name: 'MI', value: mi, fill: radialFill }]
+  const barData = [
+    { name: 'CC',    value: cc,    fill: cc <= 10 ? '#22c55e' : cc <= 20 ? '#eab308' : '#ef4444' },
+    { name: 'MI',    value: mi,    fill: mi >= 65 ? '#22c55e' : mi >= 45 ? '#eab308' : '#ef4444' },
+    { name: 'Funcs', value: funcs, fill: '#8b5cf6' },
+  ]
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-[#0a0f1a]">
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0">
+        <MobileNav />
+
         {/* Header */}
-        <header className="glass h-16 flex items-center justify-between px-6 shrink-0">
+        <header className="hidden md:flex glass h-16 items-center justify-between px-6 shrink-0">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="btn-ghost w-8 h-8 p-0 rounded-lg" type="button">
               <ArrowLeft className="w-4 h-4" />
@@ -198,43 +215,51 @@ Max 50 words. No markdown.`
               className="btn-secondary text-sm py-2"
               type="button"
             >
-              {pdfLoading
-                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                : <Download className="w-3.5 h-3.5" />
-              }
-              Download Report
+              {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">Download Report</span>
             </button>
             <button onClick={toggle} className="btn-ghost w-9 h-9 p-0 rounded-xl" type="button">
               {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <Link to="/upload" className="btn-secondary text-sm py-2">
-              <RefreshCw className="w-3.5 h-3.5" /> Re-analyze
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Re-analyze</span>
             </Link>
           </div>
         </header>
 
-        <main className="flex-1 p-6 space-y-6 overflow-auto">
+        {/* Mobile action bar */}
+        <div className="md:hidden flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
+          <button onClick={() => navigate(-1)} className="btn-ghost w-8 h-8 p-0 rounded-lg" type="button">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <span className="font-display font-bold text-sm text-slate-900 dark:text-white flex-1 truncate">
+            {data?.project_name ?? 'Results'}
+          </span>
+          <button onClick={downloadReport} disabled={pdfLoading} className="btn-secondary text-xs py-1.5 px-3" type="button">
+            {pdfLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+            PDF
+          </button>
+        </div>
+
+        <main className="flex-1 p-3 md:p-6 space-y-4 md:space-y-6 overflow-auto">
 
           {/* Metric cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCard title="Cyclomatic Complexity" value={cc} level={ccLevel(cc)} icon={GitBranch} description="Number of linearly independent paths" />
-            <MetricCard title="Maintainability Index"  value={mi} unit="/100" level={miLevel(mi)} icon={Shield} description="Composite code maintainability score" />
-            <MetricCard title="Halstead Volume" value={Number(halstead.volume).toFixed(0)} level="neutral" icon={BarChart2} description="Program vocabulary × program length" />
-            <MetricCard title="Lines of Code" value={loc} level="neutral" icon={FileCode} description="Total source lines analyzed" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <MetricCard title="Cyclomatic Complexity" value={cc} level={ccLevel(cc)} icon={GitBranch} description="Independent paths" />
+            <MetricCard title="Maintainability Index" value={mi} unit="/100" level={miLevel(mi)} icon={Shield} description="Maintainability score" />
+            <MetricCard title="Halstead Volume" value={Number(halstead.volume).toFixed(0)} level="neutral" icon={BarChart2} description="Program vocabulary" />
+            <MetricCard title="Lines of Code" value={loc} level="neutral" icon={FileCode} description="Total source lines" />
           </div>
 
           {/* Project Explorer — ZIP only */}
           {isProject && <ProjectExplorer files={files} />}
 
-          {/* Heatmap + Debt row */}
+          {/* Heatmap + Debt */}
           {isProject && (
-            <div className="grid lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <HeatmapTable files={files} />
-              </div>
-              {debtScore !== null && (
-                <DebtGauge score={debtScore} label={debtLabel} />
-              )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2"><HeatmapTable files={files} /></div>
+              {debtScore !== null && <DebtGauge score={debtScore} label={debtLabel} />}
             </div>
           )}
 
@@ -242,11 +267,11 @@ Max 50 words. No markdown.`
           {isProject && <CodeSmells smells={allSmells} />}
 
           {/* Charts row */}
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 card p-5">
               <h3 className="font-display font-semibold text-slate-900 dark:text-white mb-4 text-sm">Metrics Overview</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={barData} barSize={36}>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={barData} barSize={32}>
                   <CartesianGrid strokeDasharray="3 3" stroke={dark ? '#1e293b' : '#f1f5f9'} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: dark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: dark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
@@ -257,25 +282,22 @@ Max 50 words. No markdown.`
                 </BarChart>
               </ResponsiveContainer>
             </div>
+
+            {/* Fixed MI Gauge */}
             <div className="card p-5 flex flex-col items-center justify-center">
-              <h3 className="font-display font-semibold text-slate-900 dark:text-white mb-2 text-sm self-start">MI Score</h3>
-              <ResponsiveContainer width="100%" height={180}>
-                <RadialBarChart innerRadius="60%" outerRadius="90%" data={radialData} startAngle={90} endAngle={90 - (mi / 100) * 360}>
-                  <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                  <RadialBar dataKey="value" cornerRadius={10} fill={radialFill} background={{ fill: dark ? '#1e293b' : '#f1f5f9' }} />
-                </RadialBarChart>
-              </ResponsiveContainer>
-              <div className="text-center -mt-12">
-                <p className="text-4xl font-display font-bold" style={{ color: radialFill }}>{mi}</p>
-                <p className="text-xs text-slate-400 mt-1">out of 100</p>
-              </div>
+              <h3 className="font-display font-semibold text-slate-900 dark:text-white mb-4 text-sm self-start">MI Score</h3>
+              <CircularGauge
+                value={mi}
+                color={radialFill}
+                trackColor={dark ? '#1e293b' : '#f1f5f9'}
+              />
             </div>
           </div>
 
           {/* Halstead details */}
           <div className="card p-5">
             <h3 className="font-display font-semibold text-slate-900 dark:text-white mb-4 text-sm">Halstead Metrics</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { label: 'Volume',    value: Number(halstead.volume).toFixed(0) },
                 { label: 'Effort',    value: Number(halstead.effort).toFixed(2) },
@@ -299,7 +321,6 @@ Max 50 words. No markdown.`
             </div>
             <div className="space-y-3">
 
-              {/* ML Prediction */}
               {mlPrediction && (
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
                   <p className="text-xs uppercase tracking-wider text-slate-400">ML Defect Prediction</p>
@@ -312,7 +333,6 @@ Max 50 words. No markdown.`
                 </div>
               )}
 
-              {/* AI Refactor Recommendations */}
               {refactorLoading ? (
                 <div className="flex items-center gap-2 p-4">
                   <Loader2 className="w-3 h-3 animate-spin text-emerald-500" />
@@ -346,24 +366,22 @@ Max 50 words. No markdown.`
                     <div>
                       <p className="text-xs font-semibold text-slate-500 mb-1">Architecture</p>
                       {aiRefactor.architecture.map((a, i) => (
-                        <p key={i} className="text-sm text-slate-600 dark:text-slate-400">• {a}</p>
+                        <p key={i} className="text-sm text-slate-600 dark:text-slate.400">• {a}</p>
                       ))}
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Dynamic Insights */}
               {insights.map((ins, i) => (
                 <Alert key={i} type={ins?.type === 'danger' ? 'error' : (ins?.type ?? 'info')} message={ins?.msg ?? ''} />
               ))}
 
-              {/* Groq AI Tip */}
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                 {tipLoading ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-3 h-3 animate-spin text-emerald-500" />
-                    <span className="animate-pulse">Generating AI tip...</span>
+                    <span className="animate-pulse text-xs">Generating AI tip...</span>
                   </div>
                 ) : (
                   <>💡 <span className="font-medium">AI Tip:</span>{' '}

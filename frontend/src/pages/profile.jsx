@@ -5,7 +5,7 @@ import Alert   from '../components/Alert'
 import { useAuth }  from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { Sun, Moon } from 'lucide-react'
-
+import MobileNav from '../components/MobileNav'
 export default function Profile() {
   const { user, updateUser } = useAuth()
   const { dark, toggle }     = useTheme()
@@ -31,11 +31,10 @@ export default function Profile() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-[#0a0f1a]">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="glass h-16 flex items-center justify-between px-6 shrink-0">
+  <Sidebar />
+  <div className="flex-1 flex flex-col min-w-0">
+    <MobileNav />
+    <header className="hidden md:flex glass h-16 items-center justify-between px-6 shrink-0">
           <div>
             <p className="text-xs text-slate-400 uppercase tracking-wider">Account</p>
             <h2 className="font-display font-bold text-slate-900 dark:text-white">Profile</h2>
@@ -45,7 +44,7 @@ export default function Profile() {
           </button>
         </header>
 
-        <main className="flex-1 p-6 max-w-2xl mx-auto w-full space-y-6">
+       <main className="flex-1 p-3 md:p-6 max-w-3xl mx-auto w-full">
 
           {/* Avatar section */}
           <div className="card p-6 flex items-center gap-5">

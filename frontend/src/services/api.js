@@ -26,7 +26,7 @@ export const authAPI = {
 
 // ─── Analysis ────────────────────────────────────────────
 export const analysisAPI = {
-  analyzeCode: (code)     => API.post('/analyze/code',    { code:code,filename:"test.py" }),
+  analyzeCode: (code,filename = null)     => API.post('/analyze/code',    { code:code,filename, }),
   analyzeFile: (formData) => API.post('/analyze/upload',  formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),

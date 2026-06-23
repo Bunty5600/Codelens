@@ -14,8 +14,6 @@ from fastapi import HTTPException
 from api.auth import hash_password, verify_password, create_token
 from api.schemas.analysis_schema import SignupRequest, LoginRequest
 from ml.predictor import predict_defect_risk
-import zipfile
-import tempfile
 from fastapi import UploadFile,File
 import httpx
 from services.analysis_service import analyze_zip
@@ -27,7 +25,10 @@ from services.report_service import generate_pdf_report
 from fastapi.responses import Response
 from services.debt_service import calculate_debt_score, debt_label
 from services.github_service import analyze_github_repo
-
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Security
+from api.auth import decode_token
+from api.models.random_file import generate_filename
 app = FastAPI()
 
 app.add_middleware(
@@ -37,7 +38,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+security = HTTPBearer(auto_error=False)
 
+def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
+    if not credentials:
+        return db.query(user.User).first()
+    try:
+        payload = decode_token(credentials.credentials)
+        user_id = int(payload.get("sub"))
+        return db.query(user.User).filter(user.User.id == user_id).first()
+    except:
+        return db.query(user.User).first()
 
 @app.get("/")
 def root():
@@ -81,10 +92,9 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         raise
 
 @app.post("/analyze/code")
-def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
-
+def analyze(data: AnalyzeRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     code = data.code
-    filename = data.filename or "test.py"
+    filename = data.filename or str(generate_filename(code))
 
     result = analyze_code(code)
     ml_prediction = predict_defect_risk({
@@ -104,16 +114,16 @@ def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
     })
     print(result)
 
-    db_user = db.query(user.User).first()
+    db_user = current_user
     if not db_user:
-        db_user = user.User(email="test@test.com", name="Test User")
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
     db_analysis = analysis.Analysis(
         filename=filename,
         language="python",
+        project_name= filename,
+        risk_level=str(ml_prediction.get("risk_level", "Low")),
+        source='paste',
         user_id=db_user.id
     )
     db.add(db_analysis)
@@ -164,7 +174,7 @@ def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
         "ml_prediction": ml_prediction
     }
 @app.post("/analyze/upload")
-async def analyze_upload(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def analyze_upload(file: UploadFile = File(...), db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     print("FILE RECEIVED:", file.filename)
     try:
         content = await file.read()
@@ -177,12 +187,13 @@ async def analyze_upload(file: UploadFile = File(...), db: Session = Depends(get
                 raise HTTPException(status_code=400, detail=result["error"])
 
             # Save Analysis record
-            db_user = db.query(user.User).first()
+            db_user = current_user
             db_analysis = analysis.Analysis(
                 filename=file.filename,
                 language="python",
                 project_name=result["project_name"],
                 risk_level=result["overall_risk"],
+                source='upload',
                 user_id=db_user.id
             )
             db.add(db_analysis)
@@ -229,6 +240,18 @@ async def analyze_upload(file: UploadFile = File(...), db: Session = Depends(get
             "loc": result.get("size", {}).get("loc", 0),
             "halstead": result.get("halstead", {})
         })
+        db_user = current_user
+        if db_user:
+            db_analysis = analysis.Analysis(
+                filename=file.filename,
+                language="python",
+                project_name=file.filename,
+                risk_level=str(ml_prediction.get("risk_level", "Low")),
+                source='upload',
+                user_id=db_user.id
+            )
+            db.add(db_analysis)
+            db.commit()
         return {
             "metrics": {
                 "cc": result.get("complexity", {}).get("cyclomatic_complexity", 0),
@@ -320,8 +343,8 @@ def get_debt(payload: dict):
         "label": debt_label(score)
     }
 @app.get("/analyze/history")
-def get_history(db: Session = Depends(get_db)):
-    db_user = db.query(user.User).first()
+def get_history(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    db_user = current_user
     if not db_user:
         return []
     analyses = db.query(analysis.Analysis)\
@@ -336,11 +359,13 @@ def get_history(db: Session = Depends(get_db)):
             "project_name": a.project_name,
             "risk_level":   a.risk_level,
             "created_at":   a.created_at,
+            "source": a.source,
+            "repo_url": a.repo_url
         }
         for a in analyses
     ]
 @app.post("/analyze/github")
-async def analyze_github(payload: dict, db: Session = Depends(get_db)):
+async def analyze_github(payload: dict, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     repo_url = payload.get("repo_url", "").strip()
     if not repo_url:
         raise HTTPException(status_code=400, detail="repo_url is required")
@@ -351,13 +376,14 @@ async def analyze_github(payload: dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=result["error"])
 
     # Save to DB
-    db_user = db.query(user.User).first()
+    db_user = current_user
     db_analysis = analysis.Analysis(
         filename=result["repository"],
         language="python",
         project_name=result["repository"],
         risk_level=result["overall_risk"],
         repo_url=repo_url,
+        source='github',
         user_id=db_user.id
     )
     db.add(db_analysis)

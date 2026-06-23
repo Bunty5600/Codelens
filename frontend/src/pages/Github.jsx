@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Github, Search, Loader2, AlertCircle } from 'lucide-react'
+import { GitBranch, Search, Loader2, AlertCircle } from 'lucide-react'
 import Sidebar          from '../components/Sidebar'
 import ProjectExplorer  from '../components/ProjectExplorer'
 import HeatmapTable     from '../components/HeatmapTable'
@@ -7,6 +7,7 @@ import CodeSmells       from '../components/CodeSmells'
 import DebtGauge        from '../components/DebtGauge'
 import QualityGate      from '../components/QualityGate'
 import { analysisAPI }  from '../services/api'
+import MobileNav from '../components/MobileNav'
 
 const RISK_BADGE = {
   Low:    'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400',
@@ -38,20 +39,19 @@ export default function GitHub() {
   const allSmells = result?.files?.flatMap(f => f.smells ?? []) ?? []
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-[#0a0f1a]">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="glass h-16 flex items-center px-6 shrink-0 gap-3">
-          <Github className="w-5 h-5 text-slate-400" />
+   <div className="flex min-h-screen bg-slate-50 dark:bg-[#0a0f1a]">
+  <Sidebar />
+  <div className="flex-1 flex flex-col min-w-0">
+    <MobileNav />
+    <header className="hidden md:flex glass h-16 items-center justify-between px-6 shrink-0">
+          <GitBranch className="w-5 h-5 text-slate-400" />
           <div>
             <p className="text-xs text-slate-400 uppercase tracking-wider">Analysis</p>
             <h2 className="font-display font-bold text-slate-900 dark:text-white">GitHub Analyzer</h2>
           </div>
         </header>
 
-        <main className="flex-1 p-6 space-y-6 overflow-auto">
+       <main className="flex-1 p-3 md:p-6 max-w-3xl mx-auto w-full">
 
           {/* URL Input */}
           <div className="card p-5">
@@ -60,7 +60,7 @@ export default function GitHub() {
             </h3>
             <div className="flex gap-3">
               <div className="flex-1 relative">
-                <Github className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <GitBranch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   value={url}

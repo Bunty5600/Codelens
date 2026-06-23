@@ -14,7 +14,7 @@ import { useAuth }  from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { analysisAPI } from '../services/api'
 import { Sun, Moon } from 'lucide-react'
-
+import MobileNav from '../components/MobileNav'
 const RISK_COLORS = {
   Low:    '#22c55e',
   Medium: '#eab308',
@@ -92,12 +92,11 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-[#0a0f1a]">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="glass h-16 flex items-center justify-between px-6 shrink-0">
+<div className="flex min-h-screen bg-slate-50 dark:bg-[#0a0f1a]">
+  <Sidebar />
+  <div className="flex-1 flex flex-col min-w-0">
+    <MobileNav />
+    <header className="hidden md:flex glass h-16 items-center justify-between px-6 shrink-0">
           <div>
             <p className="text-sm text-slate-500 dark:text-slate-400">{greeting},</p>
             <h2 className="font-display font-bold text-slate-900 dark:text-white leading-tight">
@@ -114,10 +113,10 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <main className="flex-1 p-6 space-y-8 overflow-auto">
+        <main className="flex-1 p-3 md:p-6 space-y-6 md:space-y-8 overflow-auto">
 
           {/* Summary cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             {summaryCards.map(({ label, value, icon: Icon, color, bg }) => (
               <div key={label} className="card p-5">
                 <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
@@ -131,7 +130,7 @@ export default function Dashboard() {
 
           {/* Charts row */}
           {history.length > 0 && (
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
 
               {/* Risk Trend */}
               <div className="lg:col-span-2 card p-5">
@@ -197,7 +196,7 @@ export default function Dashboard() {
           {/* Quick actions */}
           <div>
             <h3 className="font-display font-semibold text-slate-900 dark:text-white mb-3">Quick Actions</h3>
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
               {[
                 { to: '/upload',  icon: Upload,   title: 'New Analysis', desc: 'Upload or paste code',  color: 'bg-emerald-500' },
                 { to: '/results', icon: BarChart2, title: 'View Results', desc: 'See latest metrics',    color: 'bg-blue-500'    },
@@ -227,6 +226,7 @@ export default function Dashboard() {
             </div>
 
             <div className="card overflow-hidden">
+                <div className="overflow-x-auto">
               {loading ? (
                 <p className="text-xs text-slate-400 text-center py-8">Loading...</p>
               ) : history.length === 0 ? (
@@ -270,6 +270,7 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+              </div>
 
         </main>
       </div>

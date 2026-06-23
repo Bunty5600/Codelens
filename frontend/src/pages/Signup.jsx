@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext'
 import { Sun, Moon } from 'lucide-react'
 import Alert from '../components/Alert'
 import {authAPI} from '../services/api'
+import logo from '../assets/logo.png'
 
 const PERKS = [
   'Cyclomatic, Halstead & MI analysis',
@@ -80,7 +81,7 @@ export default function Signup() {
 
         <div className="z-10">
           <h2 className="text-3xl font-display font-bold text-white mb-2">Start writing better code today.</h2>
-          <p className="text-slate-400 text-sm mb-8">Join 3,200+ teams who trust CodeLens AI.</p>
+          <p className="text-slate-400 text-sm mb-8">Join who trust CodeLens AI.</p>
           <ul className="space-y-3">
             {PERKS.map(p => (
               <li key={p} className="flex items-center gap-3 text-sm text-slate-300">
@@ -96,14 +97,18 @@ export default function Signup() {
 
       {/* Right */}
       <div className="flex-1 flex flex-col">
-        <div className="flex justify-end items-center gap-3 px-6 py-4">
-          <button onClick={toggle} className="btn-ghost w-9 h-9 p-0 rounded-xl">
-            {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-          <span className="text-sm text-slate-500">Have an account?</span>
-          <Link to="/login" className="btn-secondary text-sm py-1.5 px-4">Log in</Link>
-        </div>
-
+        <div className="flex items-center justify-between px-6 py-4">
+  <Link to="/" className="flex items-center lg:invisible">
+    <img src={logo} alt="CodeLens AI" className="h-16 w-auto object-contain" />
+  </Link>
+  <div className="flex items-center gap-3">
+    <button onClick={toggle} className="btn-ghost w-9 h-9 p-0 rounded-xl">
+      {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+    </button>
+    <span className="text-sm text-slate-500">Have an account?</span>
+    <Link to="/login" className="btn-secondary text-sm py-1.5 px-4">Log in</Link>
+  </div>
+</div>
         <div className="flex-1 flex items-center justify-center px-6 py-10">
           <div className="w-full max-w-sm">
             <div className="mb-8">
