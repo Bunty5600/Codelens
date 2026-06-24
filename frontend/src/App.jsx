@@ -33,7 +33,8 @@ function AppRoutes() {
       {/* Protected */}
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/upload"    element={<PrivateRoute><Upload /></PrivateRoute>} />
-      <Route path="/results"   element={<PrivateRoute><Results /></PrivateRoute>} />
+      <Route path="/results"      element={<PrivateRoute><Results /></PrivateRoute>} />
+      <Route path="/results/:id"  element={<PrivateRoute><Results /></PrivateRoute>} />
       <Route path="/profile"   element={<PrivateRoute><Profile /></PrivateRoute>} />
       <Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
        <Route path="/github" element={<PrivateRoute><GitHub /></PrivateRoute>} />

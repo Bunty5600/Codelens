@@ -31,6 +31,7 @@ export const analysisAPI = {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
   getResults:  (id)       => API.get(`/analyze/results/${id}`),
+  getById:     (id)       => API.get(`/analyze/result/${id}`),
   getHistory:  ()         => API.get('/analyze/history'),
   aiRefactor:  (data)     => API.post('/ai/refactor', data),
   generateReport: (data) => API.post('/report/generate', data, { responseType: 'blob' }),

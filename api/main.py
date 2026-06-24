@@ -390,6 +390,100 @@ async def analyze_github(payload: dict, db: Session = Depends(get_db), current_u
     db.commit()
 
     return result
+@app.get("/analyze/result/{analysis_id}")
+def get_result_by_id(analysis_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    db_user = current_user
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    a = db.query(analysis.Analysis).filter(
+        analysis.Analysis.id == analysis_id,
+        analysis.Analysis.user_id == db_user.id
+    ).first()
+
+    if not a:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    # Fetch per-file records (for ZIP uploads)
+    project_file_rows = db.query(ProjectFile).filter(
+        ProjectFile.analysis_id == analysis_id
+    ).all()
+
+    # Fetch aggregate metrics
+    db_metrics = db.query(metrics.Metrics).filter(
+        metrics.Metrics.analysis_id == analysis_id
+    ).first()
+
+    # Build files list (ZIP) or empty (single file / paste)
+    files = [
+        {
+            "file_name":  pf.file_name,
+            "cc":         pf.cc,
+            "mi":         pf.mi,
+            "loc":        pf.loc,
+            "functions":  pf.functions,
+            "risk":       pf.risk,
+            "smells":     []
+        }
+        for pf in project_file_rows
+    ]
+
+    # Aggregate — prefer per-file aggregation for ZIP, fallback to metrics table
+    if files:
+        total_cc  = sum(f["cc"]  for f in files)
+        total_loc = sum(f["loc"] for f in files)
+        total_fns = sum(f["functions"] for f in files)
+        avg_mi    = sum(f["mi"] for f in files) / len(files)
+        aggregate = {
+            "cc":        total_cc,
+            "mi":        round(avg_mi, 2),
+            "loc":       total_loc,
+            "functions": total_fns,
+            "halstead":  {
+                "volume": db_metrics.halstead_volume if db_metrics else 0,
+                "effort": db_metrics.halstead_effort if db_metrics else 0,
+            }
+        }
+    elif db_metrics:
+        aggregate = {
+            "cc":        db_metrics.cyclomatic_complexity,
+            "mi":        db_metrics.maintainability_index,
+            "loc":       db_metrics.loc,
+            "functions": 0,
+            "halstead":  {
+                "volume": db_metrics.halstead_volume,
+                "effort": db_metrics.halstead_effort,
+            }
+        }
+    else:
+        aggregate = {"cc": 0, "mi": 0, "loc": 0, "functions": 0, "halstead": {"volume": 0, "effort": 0}}
+
+    # ml_prediction stub — re-run if needed
+    ml_prediction = predict_defect_risk({
+        "cc":       aggregate["cc"],
+        "mi":       aggregate["mi"],
+        "loc":      aggregate["loc"],
+        "halstead": aggregate["halstead"]
+    })
+
+    # Single-file paste/upload uses "metrics" key; ZIP uses "aggregate" + "files"
+    if files:
+        return {
+            "analysis_id":  a.id,
+            "project_name": a.project_name,
+            "overall_risk": a.risk_level,
+            "files":        files,
+            "aggregate":    aggregate,
+            "ml_prediction": ml_prediction,
+        }
+    else:
+        return {
+            "analysis_id":  a.id,
+            "project_name": a.project_name,
+            "metrics":      aggregate,
+            "ml_prediction": ml_prediction,
+        }
+
 @app.get("/test-db")
 def test_db(db: Session = Depends(get_db)):
     return {"message": "DB dependency working"}

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   GitBranch, Shield, BarChart2, FileCode, Zap,
   RefreshCw, ArrowLeft, Loader2, Download
@@ -53,6 +53,7 @@ function CircularGauge({ value, color, trackColor }) {
 export default function Results() {
   const { dark, toggle } = useTheme()
   const navigate = useNavigate()
+  const { id } = useParams()
   const [data, setData]                     = useState(null)
   const [aiTip, setAiTip]                   = useState('')
   const [tipLoading, setTipLoading]         = useState(false)
@@ -61,12 +62,20 @@ export default function Results() {
   const [pdfLoading, setPdfLoading]         = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem('ciq_results')
-    if (stored) {
-      try { setData(JSON.parse(stored)) }
-      catch { console.error('Failed to parse ciq_results') }
+    if (id) {
+      // Coming from History page — fetch by analysis ID
+      analysisAPI.getById(id)
+        .then(res => setData(res.data))
+        .catch(() => navigate('/history'))
+    } else {
+      // Coming from Upload page — read from localStorage
+      const stored = localStorage.getItem('ciq_results')
+      if (stored) {
+        try { setData(JSON.parse(stored)) }
+        catch { console.error('Failed to parse ciq_results') }
+      }
     }
-  }, [])
+  }, [id])
 
   const isProject    = !!data?.files
   const metrics      = isProject ? (data?.aggregate ?? {}) : (data?.metrics ?? {})
