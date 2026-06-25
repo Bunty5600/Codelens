@@ -14,6 +14,7 @@ import Results   from './pages/Results.jsx'
 import Profile   from './pages/Profile.jsx'
 import History from './pages/History'
 import GitHub from './pages/GitHub.jsx'
+import { useEffect } from 'react'
 
 import './App.css'
 
@@ -46,6 +47,9 @@ function AppRoutes() {
 }
 
 export default function App() {
+     useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/`).catch(() => {})
+  }, [])
   return (
     <BrowserRouter>
       <ThemeProvider>
