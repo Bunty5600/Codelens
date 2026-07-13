@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FileCode, ChevronRight, ChevronDown, ChevronUp, X, AlertCircle, Search } from 'lucide-react'
 
 const RISK_BADGE = {
@@ -22,9 +22,22 @@ export default function ProjectExplorer({ files = [] }) {
   const [search, setSearch]       = useState('')
   const [riskFilter, setRiskFilter] = useState('All')
 
-  if (!files.length) return null
-
   const selectedFile = files.find(f => f.file_name === selected)
+
+  // Close modal on Escape, and lock background scroll while it's open
+  useEffect(() => {
+    if (!selectedFile) return
+    const onKeyDown = e => { if (e.key === 'Escape') setSelected(null) }
+    document.addEventListener('keydown', onKeyDown)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [selectedFile])
+
+  if (!files.length) return null
 
   // Filter by search + risk
   const filtered = files.filter(f => {
@@ -44,12 +57,22 @@ export default function ProjectExplorer({ files = [] }) {
     <>
       {/* Modal */}
       {selectedFile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-6 relative">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-6 relative"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${selectedFile.file_name} details`}
+            onClick={e => e.stopPropagation()}
+          >
             <button
               onClick={() => setSelected(null)}
               className="absolute top-4 right-4 btn-ghost w-8 h-8 p-0 rounded-lg"
               type="button"
+              aria-label="Close"
             >
               <X className="w-4 h-4" />
             </button>
@@ -163,8 +186,8 @@ export default function ProjectExplorer({ files = [] }) {
               <p className="text-xs text-slate-400 text-center py-6">No files match your search.</p>
             ) : (
               <>
-                <div className="overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+                  <table className="w-full text-sm min-w-[480px]">
                     <thead>
                       <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
                         <th className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400">File</th>

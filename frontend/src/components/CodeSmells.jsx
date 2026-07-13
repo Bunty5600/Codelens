@@ -46,6 +46,9 @@ export default function CodeSmells({ smells = [] }) {
         <button
           onClick={() => setCollapsed(p => !p)}
           className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+          type="button"
+          aria-expanded={!collapsed}
+          aria-controls="code-smells-body"
         >
           {collapsed
             ? <><ChevronDown className="w-3 h-3" /> Expand</>
@@ -55,9 +58,9 @@ export default function CodeSmells({ smells = [] }) {
       </div>
 
       {!collapsed && (
-        <>
+        <div id="code-smells-body" className="animate-in fade-in duration-300">
           {/* Summary badges */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
             {[
               { label: 'All',    count: smells.length, color: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' },
               { label: 'High',   count: highCount,     color: 'bg-red-50 dark:bg-red-900/20 text-red-500'     },
@@ -71,6 +74,7 @@ export default function CodeSmells({ smells = [] }) {
                   ${filter === label ? 'ring-2 ring-offset-1 ring-current' : ''}
                   ${color}`}
                 type="button"
+                aria-pressed={filter === label}
               >
                 {label} {count > 0 && `(${count})`}
               </button>
@@ -78,23 +82,30 @@ export default function CodeSmells({ smells = [] }) {
           </div>
 
           {/* Smell list */}
-          <div className="space-y-2">
-            {visible.map((s, i) => {
-              const style = SEVERITY[s.severity] || SEVERITY.Medium
-              return (
-                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${style.bg}`}>
-                  <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${style.dot}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className={`text-xs font-bold ${style.text}`}>{s.type}</p>
-                      <span className={`text-xs ${style.text} opacity-70`}>{s.severity}</span>
+          {filtered.length === 0 ? (
+            <p className="text-xs text-slate-400 py-2">No {filter.toLowerCase()} severity smells found.</p>
+          ) : (
+            <div className="space-y-2">
+              {visible.map((s, i) => {
+                const style = SEVERITY[s.severity] || SEVERITY.Medium
+                return (
+                  <div
+                    key={i}
+                    className={`flex items-start gap-3 p-3 rounded-xl ${style.bg} animate-in fade-in slide-in-from-top-1 duration-300`}
+                  >
+                    <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${style.dot}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className={`text-xs font-bold ${style.text}`}>{s.type}</p>
+                        <span className={`text-xs ${style.text} opacity-70`}>{s.severity}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{s.message}</p>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{s.message}</p>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
 
           {/* Pagination */}
           {page < totalPages && (
@@ -117,7 +128,7 @@ export default function CodeSmells({ smells = [] }) {
               Show Less
             </button>
           )}
-        </>
+        </div>
       )}
     </div>
   )

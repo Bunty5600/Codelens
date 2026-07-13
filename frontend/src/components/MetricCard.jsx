@@ -27,24 +27,28 @@ export default function MetricCard({
   const safeLevel = levelStyles[level] ? level : 'neutral'
 
   return (
-    <div className={clsx('card p-5 hover:shadow-md transition-all duration-200 group', className)}>
+    <div
+      className={clsx('card p-5 hover:shadow-md transition-all duration-200 group', className)}
+      role="group"
+      aria-label={`${title}: ${value}${unit ? ` ${unit}` : ''}, ${safeLevel}`}
+    >
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           {Icon && (
-            <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center', levelStyles[safeLevel])}>
+            <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105', levelStyles[safeLevel])}>
               <Icon className="w-4 h-4" />
             </div>
           )}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 truncate" title={title}>
               {title}
             </p>
           </div>
         </div>
 
         {/* Level badge */}
-        <span className={clsx('badge text-xs capitalize', levelStyles[safeLevel])}>
+        <span className={clsx('badge text-xs capitalize shrink-0', levelStyles[safeLevel])}>
           <span className={clsx('w-1.5 h-1.5 rounded-full', dotColors[safeLevel])} />
           {safeLevel}
         </span>
@@ -52,15 +56,15 @@ export default function MetricCard({
 
       {/* Value */}
       <div className="flex items-end gap-2 mt-1">
-        <span className="text-3xl font-display font-bold leading-none text-slate-900 dark:text-slate-50">
+        <span className="text-3xl font-display font-bold leading-none text-slate-900 dark:text-slate-50 truncate" title={String(value)}>
           {value}
         </span>
         {unit && (
-          <span className="text-sm text-slate-400 mb-0.5">{unit}</span>
+          <span className="text-sm text-slate-400 mb-0.5 shrink-0">{unit}</span>
         )}
         {trend && (
           <span className={clsx(
-            'ml-auto text-xs font-semibold px-1.5 py-0.5 rounded-lg',
+            'ml-auto shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-lg',
             trend.up
               ? 'text-red-600 bg-red-50 dark:bg-red-900/20'
               : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
@@ -72,7 +76,7 @@ export default function MetricCard({
 
       {/* Description */}
       {description && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed line-clamp-2">
           {description}
         </p>
       )}

@@ -55,6 +55,7 @@ export default function Results() {
   const navigate = useNavigate()
   const { id } = useParams()
   const [data, setData]                     = useState(null)
+  const [dataLoading, setDataLoading]       = useState(true)
   const [aiTip, setAiTip]                   = useState('')
   const [tipLoading, setTipLoading]         = useState(false)
   const [aiRefactor, setAiRefactor]         = useState(null)
@@ -62,11 +63,13 @@ export default function Results() {
   const [pdfLoading, setPdfLoading]         = useState(false)
 
   useEffect(() => {
+    setDataLoading(true)
     if (id) {
       // Coming from History page — fetch by analysis ID
       analysisAPI.getById(id)
         .then(res => setData(res.data))
         .catch(() => navigate('/history'))
+        .finally(() => setDataLoading(false))
     } else {
       // Coming from Upload page — read from localStorage
       const stored = localStorage.getItem('ciq_results')
@@ -74,6 +77,7 @@ export default function Results() {
         try { setData(JSON.parse(stored)) }
         catch { console.error('Failed to parse ciq_results') }
       }
+      setDataLoading(false)
     }
   }, [id])
 
@@ -173,6 +177,21 @@ Max 50 words. No markdown.`
     }
   }
 
+  if (dataLoading) {
+    return (
+      <div className="flex min-h-screen bg-slate-50 dark:bg-[#0a0f1a]">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <MobileNav />
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-10" role="status" aria-live="polite">
+            <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+            <p className="text-sm text-slate-400">Loading analysis…</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!data) {
     return (
       <div className="flex min-h-screen bg-slate-50 dark:bg-[#0a0f1a]">
@@ -210,9 +229,9 @@ Max 50 words. No markdown.`
             <button onClick={() => navigate(-1)} className="btn-ghost w-8 h-8 p-0 rounded-lg" type="button">
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-slate-400 uppercase tracking-wider">Analysis</p>
-              <h2 className="font-display font-bold text-slate-900 dark:text-white">
+              <h2 className="font-display font-bold text-slate-900 dark:text-white truncate max-w-[40vw]" title={data?.project_name ?? 'Results'}>
                 {data?.project_name ?? 'Results'}
               </h2>
             </div>
@@ -251,7 +270,7 @@ Max 50 words. No markdown.`
           </button>
         </div>
 
-        <main className="flex-1 p-3 md:p-6 space-y-4 md:space-y-6 overflow-auto">
+        <main className="flex-1 p-3 md:p-6 space-y-4 md:space-y-6 overflow-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
 
           {/* Metric cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -343,7 +362,7 @@ Max 50 words. No markdown.`
               )}
 
               {refactorLoading ? (
-                <div className="flex items-center gap-2 p-4">
+                <div className="flex items-center gap-2 p-4" role="status" aria-live="polite">
                   <Loader2 className="w-3 h-3 animate-spin text-emerald-500" />
                   <span className="text-xs text-slate-400 animate-pulse">Generating refactor recommendations...</span>
                 </div>
@@ -375,7 +394,7 @@ Max 50 words. No markdown.`
                     <div>
                       <p className="text-xs font-semibold text-slate-500 mb-1">Architecture</p>
                       {aiRefactor.architecture.map((a, i) => (
-                        <p key={i} className="text-sm text-slate-600 dark:text-slate.400">• {a}</p>
+                        <p key={i} className="text-sm text-slate-600 dark:text-slate-400">• {a}</p>
                       ))}
                     </div>
                   )}
@@ -388,7 +407,7 @@ Max 50 words. No markdown.`
 
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                 {tipLoading ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" role="status" aria-live="polite">
                     <Loader2 className="w-3 h-3 animate-spin text-emerald-500" />
                     <span className="animate-pulse text-xs">Generating AI tip...</span>
                   </div>
