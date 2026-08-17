@@ -1,7 +1,7 @@
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import os
-from api.models import user, analysis, metrics
+from api.models import user, analysis, metrics, project_files
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from api.database import get_db, Base, engine
@@ -11,8 +11,6 @@ Base.metadata.create_all(bind=engine)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analyzer.analyzer import analyze_code
 from fastapi import HTTPException
-from api.auth import hash_password, verify_password, create_token
-from api.schemas.analysis_schema import SignupRequest, LoginRequest
 from ml.predictor import predict_defect_risk
 from fastapi import UploadFile,File
 import httpx
@@ -25,71 +23,31 @@ from services.report_service import generate_pdf_report
 from fastapi.responses import Response
 from services.debt_service import calculate_debt_score, debt_label
 from services.github_service import analyze_github_repo
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import Security
-from api.auth import decode_token
 from api.models.random_file import generate_filename
+from api.clerk_auth import get_current_user
 app = FastAPI()
+
+
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if o.strip()
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-security = HTTPBearer(auto_error=False)
-
-def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
-    if not credentials:
-        return db.query(user.User).first()
-    try:
-        payload = decode_token(credentials.credentials)
-        user_id = int(payload.get("sub"))
-        return db.query(user.User).filter(user.User.id == user_id).first()
-    except:
-        return db.query(user.User).first()
 
 @app.get("/")
 def root():
     return {"message": "API Working"}
-# ── Signup ───
-@app.post("/auth/signup")
-def signup(data: SignupRequest, db: Session = Depends(get_db)):
-    existing = db.query(user.User).filter(user.User.email == data.email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    new_user = user.User(
-        name=data.name,
-        email=data.email,
-        hashed_password=hash_password(data.password)
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    token = create_token({"sub": str(new_user.id), "email": new_user.email})
-    return {"token": token, "name": new_user.name, "email": new_user.email}
-# ── Login ────
-@app.post("/auth/login")
-def login(data: LoginRequest, db: Session = Depends(get_db)):
-    try:
-        db_user = db.query(user.User).filter(user.User.email == data.email).first()
-        print("USER FOUND:", db_user)
-        if not db_user:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
-        print("HASHED IN DB:", db_user.hashed_password)
-        result = verify_password(data.password, db_user.hashed_password)
-        print("VERIFY RESULT:", result)
-        if not result:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
-        token = create_token({"sub": str(db_user.id), "email": db_user.email})
-        return {"token": token, "name": db_user.name, "email": db_user.email}
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise
 
 @app.post("/analyze/code")
 def analyze(data: AnalyzeRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
@@ -97,6 +55,10 @@ def analyze(data: AnalyzeRequest, db: Session = Depends(get_db), current_user = 
     filename = data.filename or str(generate_filename(code))
 
     result = analyze_code(code)
+
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
     ml_prediction = predict_defect_risk({
         "cc": result.get("complexity", {}).get(
             "cyclomatic_complexity", 0
@@ -179,6 +141,9 @@ async def analyze_upload(file: UploadFile = File(...), db: Session = Depends(get
     try:
         content = await file.read()
 
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="Uploaded file has no filename")
+
         if file.filename.endswith(".zip"):
             project_name = file.filename.replace(".zip", "")
             result = analyze_zip(content, project_name)
@@ -234,6 +199,10 @@ async def analyze_upload(file: UploadFile = File(...), db: Session = Depends(get
         # Single file fallback
         code = content.decode("utf-8", errors="ignore")
         result = analyze_code(code)
+
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+
         ml_prediction = predict_defect_risk({
             "cc": result.get("complexity", {}).get("cyclomatic_complexity", 0),
             "mi": result.get("maintainability", {}).get("maintainability_index", 0),
@@ -263,12 +232,16 @@ async def analyze_upload(file: UploadFile = File(...), db: Session = Depends(get
             "ml_prediction": ml_prediction
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         print("UPLOAD ERROR:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
 @app.post("/ai-tip")
 async def get_ai_tip(payload: dict):
     groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured on the server")
 
     async with httpx.AsyncClient() as client:
         response = await client.post(
@@ -383,7 +356,8 @@ async def analyze_github(payload: dict, db: Session = Depends(get_db), current_u
         project_name=result["repository"],
         risk_level=result["overall_risk"],
         repo_url=repo_url,
-        source='github',
+        source="github",
+        analysis_data=result,
         user_id=db_user.id
     )
     db.add(db_analysis)
@@ -403,6 +377,9 @@ def get_result_by_id(analysis_id: int, db: Session = Depends(get_db), current_us
 
     if not a:
         raise HTTPException(status_code=404, detail="Analysis not found")
+
+    if a.source == "github" and a.analysis_data:
+        return a.analysis_data
 
     # Fetch per-file records (for ZIP uploads)
     project_file_rows = db.query(ProjectFile).filter(
@@ -483,7 +460,3 @@ def get_result_by_id(analysis_id: int, db: Session = Depends(get_db), current_us
             "metrics":      aggregate,
             "ml_prediction": ml_prediction,
         }
-
-@app.get("/test-db")
-def test_db(db: Session = Depends(get_db)):
-    return {"message": "DB dependency working"}

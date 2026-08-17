@@ -19,7 +19,8 @@ import { useEffect } from 'react'
 import './App.css'
 
 function PrivateRoute({ children }) {
-  const { user } = useAuth()
+  const { user, isLoaded } = useAuth()
+  if (!isLoaded) return null // brief flash while Clerk resolves the session
   return user ? children : <Navigate to="/login" replace />
 }
 

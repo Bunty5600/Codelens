@@ -1,28 +1,19 @@
 import axios from 'axios'
+
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:9000",
   timeout: 30000,
 })
 
-// Attach token to every request
-// Attach token to every request (skip auth routes)
-API.interceptors.request.use((config) => {
-  const isAuthRoute = config.url?.startsWith('/auth/')
-  if (!isAuthRoute) {
-    const user = localStorage.getItem('ciq_user')
-    if (user) {
-      const parsed = JSON.parse(user)
-      if (parsed.token) config.headers.Authorization = `Bearer ${parsed.token}`
-    }
-  }
+// Attach the current Clerk session token to every request. Clerk attaches
+// itself to `window.Clerk` once loaded (this happens automatically inside
+// <ClerkProvider>, see main.jsx), so this works from a plain module without
+// needing a React hook at every call site.
+API.interceptors.request.use(async (config) => {
+  const token = await window.Clerk?.session?.getToken()
+  if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
-
-// ─── Auth ────────────────────────────────────────────────
-export const authAPI = {
-  signup: (data) => API.post('/auth/signup', data),
-  login:  (data) => API.post('/auth/login',  data),
-}
 
 // ─── Analysis ────────────────────────────────────────────
 export const analysisAPI = {

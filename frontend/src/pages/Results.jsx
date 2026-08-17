@@ -62,13 +62,23 @@ export default function Results() {
   const [refactorLoading, setRefactorLoading] = useState(false)
   const [pdfLoading, setPdfLoading]         = useState(false)
 
+  const [loadError, setLoadError] = useState(null)
+
   useEffect(() => {
     setDataLoading(true)
+    setLoadError(null)
     if (id) {
       // Coming from History page — fetch by analysis ID
       analysisAPI.getById(id)
         .then(res => setData(res.data))
-        .catch(() => navigate('/history'))
+        .catch((err) => {
+          console.error('Failed to load analysis', id, err)
+          setLoadError(
+            err.response?.status === 404
+              ? "That analysis doesn't exist or isn't yours."
+              : err.response?.data?.detail || err.message || 'Failed to load analysis.'
+          )
+        })
         .finally(() => setDataLoading(false))
     } else {
       // Coming from Upload page — read from localStorage
@@ -200,8 +210,15 @@ Max 50 words. No markdown.`
           <MobileNav />
           <div className="flex-1 flex flex-col items-center justify-center gap-4 p-10 text-center">
             <BarChart2 className="w-12 h-12 text-slate-300" />
-            <h2 className="font-display font-bold text-xl text-slate-700 dark:text-slate-300">No results yet</h2>
-            <p className="text-sm text-slate-400">Run an analysis to see metrics here.</p>
+            <h2 className="font-display font-bold text-xl text-slate-700 dark:text-slate-300">
+              {loadError ? 'Could not load this analysis' : 'No results yet'}
+            </h2>
+            <p className="text-sm text-slate-400">
+              {loadError || 'Run an analysis to see metrics here.'}
+            </p>
+            {loadError && id && (
+              <Link to="/history" className="btn-secondary text-sm">Back to History</Link>
+            )}
             <Link to="/upload" className="btn-primary mt-2"><Zap className="w-4 h-4" /> Analyze Code</Link>
           </div>
         </div>
@@ -311,7 +328,7 @@ Max 50 words. No markdown.`
               </ResponsiveContainer>
             </div>
 
-            {/* Fixed MI Gauge */}
+
             <div className="card p-5 flex flex-col items-center justify-center">
               <h3 className="font-display font-semibold text-slate-900 dark:text-white mb-4 text-sm self-start">MI Score</h3>
               <CircularGauge

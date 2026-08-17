@@ -1,34 +1,40 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext } from 'react'
+import { useUser, useClerk } from '@clerk/clerk-react'
 
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try {
-      const u = localStorage.getItem('ciq_user')
-      return u ? JSON.parse(u) : null
-    } catch { return null }
-  })
+  const { user: clerkUser, isLoaded } = useUser()
+  const { signOut } = useClerk()
 
-  const login = (userData) => {
-    setUser(userData)
-    localStorage.setItem('ciq_user', JSON.stringify(userData))
-  }
+  const user = clerkUser
+    ? {
+        name:
+          clerkUser.fullName ||
+          clerkUser.firstName ||
+          clerkUser.primaryEmailAddress?.emailAddress ||
+          'User',
+        email: clerkUser.primaryEmailAddress?.emailAddress || '',
+        joinedAt: clerkUser.createdAt,
+      }
+    : null
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('ciq_user')
-    localStorage.removeItem('ciq_results')
-  }
+  const logout = () => signOut()
 
-  const updateUser = (updates) => {
-    const updated = { ...user, ...updates }
-    setUser(updated)
-    localStorage.setItem('ciq_user', JSON.stringify(updated))
+
+  const updateUser = async (updates) => {
+    if (!clerkUser) return
+    if (updates.name !== undefined) {
+      const [firstName, ...rest] = updates.name.trim().split(/\s+/)
+      await clerkUser.update({
+        firstName: firstName || '',
+        lastName: rest.join(' '),
+      })
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, logout, updateUser, isLoaded }}>
       {children}
     </AuthContext.Provider>
   )

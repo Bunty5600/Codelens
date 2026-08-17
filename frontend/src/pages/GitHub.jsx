@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { GitBranch, Search, Loader2, AlertCircle, X, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { GitBranch, Search, Loader2, AlertCircle, X, Sparkles, ArrowRight, Play, CheckCircle2 } from 'lucide-react'
 import Sidebar          from '../components/Sidebar'
 import ProjectExplorer  from '../components/ProjectExplorer'
 import HeatmapTable     from '../components/HeatmapTable'
@@ -7,25 +7,23 @@ import CodeSmells       from '../components/CodeSmells'
 import DebtGauge        from '../components/DebtGauge'
 import QualityGate      from '../components/QualityGate'
 import { analysisAPI }  from '../services/api'
-import MobileNav from '../components/MobileNav'
+import MobileNav        from '../components/MobileNav'
 
 const RISK_BADGE = {
-  Low:    'bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30 shadow-[0_0_16px_-4px_rgba(16,185,129,0.5)]',
-  Medium: 'bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/30 shadow-[0_0_16px_-4px_rgba(245,158,11,0.5)]',
-  High:   'bg-rose-500/10 text-rose-500 ring-1 ring-rose-500/30 shadow-[0_0_16px_-4px_rgba(244,63,94,0.5)]',
+  Low:    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+  Medium: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+  High:   'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
 }
 
 export default function GitHub() {
-  const [url, setUrl]         = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
-  const [result, setResult]   = useState(null)
+  const [url, setUrl]             = useState('')
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState('')
+  const [result, setResult]       = useState(null)
   const [showLensy, setShowLensy] = useState(true)
-  const [focused, setFocused] = useState(false)
+  const [focused, setFocused]     = useState(false)
 
-  const closeLensy = () => {
-    setShowLensy(false)
-  }
+  const closeLensy = () => setShowLensy(false)
 
   const handleAnalyze = async (overrideUrl) => {
     const target = (overrideUrl ?? url).trim()
@@ -53,367 +51,253 @@ export default function GitHub() {
   const allSmells = result?.files?.flatMap(f => f.smells ?? []) ?? []
 
   return (
-    <div className="relative flex min-h-screen bg-slate-50 dark:bg-[#05080f] overflow-hidden">
+    <div className="relative flex min-h-screen bg-[#F3F1ED] dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-amber-300 selection:text-slate-900">
 
-      {/* Ambient gradient atmosphere */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="glx-blob absolute -top-32 -left-24 w-[32rem] h-[32rem] rounded-full bg-emerald-500/20 dark:bg-emerald-500/10 blur-[100px]" />
-        <div className="glx-blob glx-blob-delay absolute top-1/3 -right-32 w-[28rem] h-[28rem] rounded-full bg-cyan-500/20 dark:bg-cyan-500/10 blur-[100px]" />
-        <div className="glx-blob glx-blob-delay-2 absolute bottom-0 left-1/4 w-[24rem] h-[24rem] rounded-full bg-violet-500/10 dark:bg-violet-500/10 blur-[100px]" />
-      </div>
-
+      {/* Sidebar Navigation */}
       <Sidebar />
-      <div className="relative flex-1 flex flex-col min-w-0">
+
+      <div className="relative flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         <MobileNav />
 
-        <header className="hidden md:flex items-center gap-3 h-16 px-6 shrink-0 backdrop-blur-xl bg-white/40 dark:bg-white/[0.03] border-b border-slate-200/60 dark:border-white/10">
-          <div className="relative">
-            <GitBranch className="w-5 h-5 text-emerald-500" />
-          </div>
-          <div>
-            <p className="text-[11px] text-slate-400 uppercase tracking-[0.15em] font-medium">Analysis</p>
-            <h2 className="font-display font-bold text-slate-900 dark:text-white leading-tight">GitHub Analyzer</h2>
+        {/* Hero Banner with Soft Sunset Gradient */}
+        <header className="px-4 pt-4 pb-2 md:px-8 md:pt-6">
+          <div className="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-100/70 to-amber-100/80 dark:from-[#181D31] dark:via-[#1B1A38] dark:to-[#29231E] border border-white/60 dark:border-white/10 p-6 md:p-12 shadow-sm transition-all">
+
+            {/* Soft Ambient Mesh Glows */}
+            <div className="pointer-events-none absolute -top-24 -left-24 w-80 h-80 rounded-full bg-purple-300/40 dark:bg-purple-900/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-amber-300/40 dark:bg-amber-900/20 blur-3xl" />
+
+            <div className="relative z-10 max-w-2xl mx-auto text-center space-y-4">
+              {/* Badge Pill */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 dark:bg-white/10 backdrop-blur-md border border-white/80 dark:border-white/10 shadow-xs text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                <span>AI-Powered Repository Insights</span>
+              </div>
+
+              {/* Big Headline */}
+              <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
+                GitHub Code Analysis <br className="hidden sm:inline" /> & Architecture Lens
+              </h1>
+
+              <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 max-w-lg mx-auto font-normal">
+                Inspect metrics, complexity, technical debt, and code smells across any public repository in seconds.
+              </p>
+
+              {/* Pill Search Input */}
+              <div className="pt-2 max-w-xl mx-auto">
+                <div className={`p-1.5 rounded-full bg-white dark:bg-slate-900/90 border transition-all duration-300 shadow-lg flex items-center gap-2 ${
+                  focused 
+                    ? 'border-indigo-500 ring-4 ring-indigo-500/10' 
+                    : 'border-slate-200 dark:border-slate-800'
+                }`}>
+                  <div className="pl-4 text-slate-400">
+                    <GitBranch className="w-5 h-5" />
+                  </div>
+                  <input
+                    type="text"
+                    value={url}
+                    onChange={e => setUrl(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAnalyze()}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    placeholder="https://github.com/username/repository"
+                    aria-label="GitHub repository URL"
+                    disabled={loading}
+                    className="flex-1 bg-transparent py-2.5 text-xs md:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+                  />
+                  <button
+                    onClick={() => handleAnalyze()}
+                    disabled={loading || !url.trim()}
+                    className="px-6 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-bold text-xs md:text-sm transition-all duration-200 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-sm"
+                    type="button"
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing</>
+                    ) : (
+                      <><Search className="w-4 h-4" /> Analyze</>
+                    )}
+                  </button>
+                </div>
+
+                {/* Example Trigger Button */}
+                <div className="mt-3 flex items-center justify-center gap-3">
+                  <button
+                    onClick={runExample}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 hover:bg-amber-400/30 text-amber-800 dark:text-amber-300 text-xs font-semibold transition-colors"
+                  >
+                    <Play className="w-3 h-3 fill-current" />
+                    <span>Try with psf/requests</span>
+                  </button>
+                </div>
+
+                {/* Error Banner */}
+                {error && (
+                  <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-medium border border-rose-500/20">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 p-3 md:p-6 max-w-3xl mx-auto w-full">
+        {/* Main Content Dashboard */}
+        <main className="flex-1 px-4 md:px-8 py-6 max-w-7xl mx-auto w-full space-y-6">
 
-          {/* URL Input */}
-          <div className={`glx-card p-5 transition-shadow duration-300 ${focused ? 'glx-card-focus' : ''}`}>
-            <h3 className="font-display font-semibold text-slate-900 dark:text-white text-sm mb-3">
-              Repository URL
-            </h3>
-            <div className="flex gap-3">
-              <div className="flex-1 relative">
-                <GitBranch className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${focused ? 'text-emerald-500' : 'text-slate-400'}`} />
-                <input
-                  type="text"
-                  value={url}
-                  onChange={e => setUrl(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAnalyze()}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  placeholder="https://github.com/username/repository"
-                  aria-label="GitHub repository URL"
-                  disabled={loading}
-                  className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-white/10
-                             bg-white/70 dark:bg-white/[0.04] text-slate-900 dark:text-white
-                             placeholder:text-slate-400
-                             focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500/40
-                             transition-all disabled:opacity-60"
-                />
-              </div>
-              <button
-                onClick={() => handleAnalyze()}
-                disabled={loading || !url.trim()}
-                className="glx-btn-primary text-sm py-2 px-4 disabled:opacity-40 disabled:cursor-not-allowed"
-                type="button"
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  {loading
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</>
-                    : <><Search className="w-4 h-4" /> Analyze</>
-                  }
-                </span>
-              </button>
-            </div>
-
-            {error && (
-              <div
-                className="mt-3 flex items-center gap-2 text-rose-500 text-xs animate-in fade-in slide-in-from-top-1 duration-300"
-                role="alert"
-                aria-live="assertive"
-              >
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                {error}
-              </div>
-            )}
-          </div>
-
-          {/* Loading skeleton */}
+          {/* Loading Skeleton Card Deck */}
           {loading && (
-            <div className="space-y-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="glx-card p-5" style={{ animationDelay: `${i * 80}ms` }}>
-                  <div className="glx-shimmer h-4 rounded w-1/3 mb-3" />
-                  <div className="glx-shimmer h-3 rounded w-2/3" />
+                <div key={i} className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-4 animate-pulse">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-full w-1/2" />
+                  <div className="h-8 bg-slate-100 dark:bg-slate-800/60 rounded-2xl w-3/4" />
+                  <div className="h-12 bg-slate-100 dark:bg-slate-800/40 rounded-2xl w-full" />
                 </div>
               ))}
             </div>
           )}
 
-          {/* Results */}
+          {/* Result Presentation */}
           {result && !loading && (
-            <div className="space-y-6 mt-4">
-              {/* Repository Summary */}
-              <div className="glx-card glx-reveal p-5" style={{ animationDelay: '0ms' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-display font-semibold text-slate-900 dark:text-white text-sm">
-                    Repository Summary
-                  </h3>
-                  <span className={`text-xs px-3 py-1 rounded-full font-medium ${RISK_BADGE[result.overall_risk] ?? RISK_BADGE.Low}`}>
-                    {result.overall_risk} Risk
+            <div className="space-y-6">
+
+              {/* Card Deck Metric Display */}
+              <div className="rounded-[2rem] bg-white dark:bg-slate-900 p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Repository Snapshot</h2>
+                    <p className="text-xs text-slate-400">Overview metrics for {result.repository}</p>
+                  </div>
+                  <span className={`text-xs px-3.5 py-1.5 rounded-full font-bold ${RISK_BADGE[result.overall_risk] ?? RISK_BADGE.Low}`}>
+                    {result.overall_risk} Risk Profile
                   </span>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+                {/* Card Items Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {[
-                    { label: 'Repository',         value: result.repository },
-                    { label: 'Python Files',        value: result.total_files },
-                    { label: 'Avg Complexity',      value: result.aggregate?.cc },
-                    { label: 'Avg Maintainability', value: `${result.aggregate?.mi}/100` },
-                    { label: 'Total LOC',           value: result.aggregate?.loc },
-                    { label: 'Technical Debt',      value: `${result.debt_score}/10` },
-                    { label: 'Highest Risk File',   value: result.highest_risk_file },
-                    { label: 'Debt Label',          value: result.debt_label },
-                    { label: 'Languages',           value: Object.keys(result.languages ?? {}).join(', ') || 'Python' },
-                  ].map(({ label, value }) => (
+                    { label: 'Repository',         value: result.repository, gradient: 'from-blue-500/10 to-indigo-500/5' },
+                    { label: 'Python Files',        value: result.total_files, gradient: 'from-amber-500/10 to-orange-500/5' },
+                    { label: 'Avg Complexity',      value: result.aggregate?.cc, gradient: 'from-purple-500/10 to-pink-500/5' },
+                    { label: 'Avg Maintainability', value: `${result.aggregate?.mi}/100`, gradient: 'from-emerald-500/10 to-teal-500/5' },
+                    { label: 'Total LOC',           value: result.aggregate?.loc, gradient: 'from-sky-500/10 to-blue-500/5' },
+                    { label: 'Technical Debt',      value: `${result.debt_score}/10`, gradient: 'from-rose-500/10 to-red-500/5' },
+                    { label: 'Highest Risk File',   value: result.highest_risk_file, gradient: 'from-indigo-500/10 to-purple-500/5' },
+                    { label: 'Languages',           value: Object.keys(result.languages ?? {}).join(', ') || 'Python', gradient: 'from-teal-500/10 to-emerald-500/5' },
+                  ].map(({ label, value, gradient }) => (
                     <div
                       key={label}
-                      className="group rounded-xl p-3 text-center bg-slate-50/80 dark:bg-white/[0.03]
-                                 border border-slate-200/60 dark:border-white/5
-                                 hover:border-emerald-500/30 hover:bg-emerald-500/5
-                                 transition-all duration-200 hover:-translate-y-0.5"
+                      className={`p-4 rounded-2xl bg-gradient-to-br ${gradient} border border-slate-200/50 dark:border-white/5 transition-all duration-200 hover:scale-[1.02]`}
                     >
-                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{value}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{label}</p>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
+                      <p className="text-base font-extrabold text-slate-900 dark:text-white mt-1 truncate">{value}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Quality Gate */}
-              <div className="glx-reveal" style={{ animationDelay: '60ms' }}>
+              <div className="rounded-[2rem] overflow-hidden border border-slate-200/80 dark:border-slate-800">
                 <QualityGate gate={result.quality_gate} />
               </div>
 
               {/* Project Explorer + Debt */}
-              <div className="grid lg:grid-cols-3 gap-6 glx-reveal" style={{ animationDelay: '120ms' }}>
-                <div className="lg:col-span-2">
+              <div className="grid lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 rounded-[2rem] bg-white dark:bg-slate-900 p-2 border border-slate-200/80 dark:border-slate-800">
                   <ProjectExplorer files={result.files ?? []} />
                 </div>
-                <DebtGauge score={result.debt_score} label={result.debt_label} />
+                <div className="rounded-[2rem] bg-white dark:bg-slate-900 p-2 border border-slate-200/80 dark:border-slate-800">
+                  <DebtGauge score={result.debt_score} label={result.debt_label} />
+                </div>
               </div>
 
-              {/* Heatmap */}
-              <div className="glx-reveal" style={{ animationDelay: '180ms' }}>
+              {/* Heatmap Table */}
+              <div className="rounded-[2rem] bg-white dark:bg-slate-900 p-2 border border-slate-200/80 dark:border-slate-800">
                 <HeatmapTable files={result.files ?? []} />
               </div>
 
               {/* Code Smells */}
-              <div className="glx-reveal" style={{ animationDelay: '240ms' }}>
+              <div className="rounded-[2rem] bg-white dark:bg-slate-900 p-2 border border-slate-200/80 dark:border-slate-800">
                 <CodeSmells smells={allSmells} />
               </div>
+
             </div>
           )}
 
+          {/* Floating Assistant Widget (Lensy) */}
           {showLensy && (
-            <div className="fixed bottom-6 right-6 z-50 flex items-end gap-4">
+            <div className="fixed bottom-6 right-6 z-50 flex items-end gap-3">
 
-              {/* Owl */}
-              <div className="relative glx-float">
-                <div className="text-6xl cursor-pointer select-none drop-shadow-[0_8px_16px_rgba(16,185,129,0.35)]">
-                  🦉
-                </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full animate-ping"></div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full"></div>
-              </div>
+              {/* Chat Bubble Card */}
+              <div className="w-80 md:w-96 rounded-3xl bg-white/90 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-5 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
-              {/* Chat Bubble */}
-              <div className="relative w-96 rounded-3xl overflow-hidden
-                               border border-white/20 dark:border-white/10
-                               bg-white/80 dark:bg-slate-900/70 backdrop-blur-2xl
-                               shadow-[0_20px_60px_-15px_rgba(0,0,0,0.35)]
-                               animate-in slide-in-from-bottom-4 fade-in duration-500">
-
-                {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 relative overflow-hidden
-                                 bg-gradient-to-r from-emerald-500 via-emerald-500 to-cyan-500 text-white">
-                  <div className="glx-shine absolute inset-0" />
-                  <div className="relative flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    <span className="font-semibold">Lensy AI Assistant</span>
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🦉</span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">Lensy Assistant</h4>
+                      <p className="text-[10px] text-slate-400">CodeLens AI Guide</p>
+                    </div>
                   </div>
                   <button
                     onClick={closeLensy}
-                    className="relative opacity-80 hover:opacity-100 transition-opacity"
+                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     type="button"
-                    aria-label="Dismiss Lensy assistant"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Body */}
-                <div className="p-5">
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    Welcome to GitHub Analyzer.
-                    Here's what you can expect from CodeLens AI.
-                  </p>
-
-                  <div className="mt-4 grid gap-3">
-                    <div className="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/20">
-                      <p className="font-semibold text-emerald-500 text-sm">✅ Full Analysis</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Python repositories receive: CC, MI, Halstead metrics, Code Smells and Technical Debt.
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl p-3 bg-cyan-500/10 border border-cyan-500/20">
-                      <p className="font-semibold text-cyan-500 text-sm">⚡ Supported Languages</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        JS, TS, JSX, TSX, HTML, CSS, Java and Go.
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl p-3 bg-amber-500/10 border border-amber-500/20">
-                      <p className="font-semibold text-amber-500 text-sm">⚠ Limitations</p>
-                      <ul className="text-xs text-slate-500 dark:text-slate-400 mt-1 space-y-1">
-                        <li>Large repos may take longer.</li>
-                        <li>.next folders are ignored.</li>
-                        <li>coverage folders are skipped.</li>
-                        <li>JS/React gets basic metrics.</li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {['.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.go'].map((lang) => (
-                      <span
-                        key={lang}
-                        className="px-2 py-1 rounded-full text-xs bg-slate-100 dark:bg-white/[0.06]
-                                   border border-slate-200/60 dark:border-white/5 text-slate-600 dark:text-slate-300"
-                      >
-                        {lang}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="mt-5 flex gap-3">
-                    <button
-                      onClick={runExample}
-                      className="glx-btn-primary text-xs py-2 px-3"
-                      type="button"
-                    >
-                      <span className="relative z-10">Try Example</span>
-                    </button>
-                    <button
-                      onClick={closeLensy}
-                      className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-                    >
-                      Got it
-                    </button>
-                  </div>
+                <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                  <p className="font-semibold text-slate-900 dark:text-white">What CodeLens provides:</p>
+                  <ul className="space-y-1.5">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>Python metrics: CC, MI, Halstead & Smells</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-cyan-500 shrink-0 mt-0.5" />
+                      <span>Supports JS, TS, JSX, Java & Go</span>
+                    </li>
+                  </ul>
                 </div>
 
-                {/* Arrow */}
-                <div className="absolute right-[-10px] bottom-8 w-5 h-5 bg-white/80 dark:bg-slate-900/70 rotate-45
-                                 border-r border-b border-white/20 dark:border-white/10"></div>
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    onClick={runExample}
+                    className="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+                    type="button"
+                  >
+                    <span>Run Demo</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={closeLensy}
+                    className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+
               </div>
             </div>
           )}
 
+          {/* Minimized Assistant Trigger */}
           {!showLensy && (
             <button
               onClick={() => setShowLensy(true)}
               type="button"
               aria-label="Reopen Lensy assistant"
-              className="fixed bottom-6 right-6 z-50 glx-float text-5xl select-none
-                         drop-shadow-[0_8px_16px_rgba(16,185,129,0.35)]
-                         hover:scale-110 transition-transform"
+              className="fixed bottom-6 right-6 z-50 p-3 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl hover:scale-105 transition-transform flex items-center justify-center text-xl"
             >
               🦉
             </button>
           )}
+
         </main>
       </div>
-
-      <style>{`
-        .glx-card {
-          border-radius: 1rem;
-          background: rgba(255,255,255,0.65);
-          border: 1px solid rgba(148,163,184,0.25);
-          box-shadow: 0 8px 30px -12px rgba(15,23,42,0.12);
-          backdrop-filter: blur(16px);
-        }
-        .dark .glx-card {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.07);
-          box-shadow: 0 8px 30px -12px rgba(0,0,0,0.5);
-        }
-        .glx-card-focus {
-          box-shadow: 0 0 0 1px rgba(16,185,129,0.3), 0 12px 36px -12px rgba(16,185,129,0.25);
-        }
-        .glx-btn-primary {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          border-radius: 0.75rem;
-          font-weight: 600;
-          color: white;
-          background: linear-gradient(135deg, #10b981, #06b6d4);
-          box-shadow: 0 6px 20px -6px rgba(16,185,129,0.5);
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
-          overflow: hidden;
-        }
-        .glx-btn-primary:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 10px 26px -6px rgba(16,185,129,0.6);
-        }
-        .glx-btn-primary:active:not(:disabled) {
-          transform: translateY(0);
-        }
-        .glx-shimmer {
-          background: linear-gradient(90deg,
-            rgba(148,163,184,0.15) 25%,
-            rgba(148,163,184,0.35) 50%,
-            rgba(148,163,184,0.15) 75%);
-          background-size: 200% 100%;
-          animation: glxShimmer 1.4s ease-in-out infinite;
-        }
-        @keyframes glxShimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-        .glx-reveal {
-          animation: glxFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        @keyframes glxFadeUp {
-          from { opacity: 0; transform: translateY(14px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .glx-float {
-          animation: glxFloat 3.2s ease-in-out infinite;
-        }
-        @keyframes glxFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-        .glx-blob {
-          animation: glxBlob 14s ease-in-out infinite;
-        }
-        .glx-blob-delay { animation-delay: -4s; }
-        .glx-blob-delay-2 { animation-delay: -9s; }
-        @keyframes glxBlob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -20px) scale(1.08); }
-          66% { transform: translate(-20px, 25px) scale(0.95); }
-        }
-        .glx-shine {
-          background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
-          background-size: 200% 100%;
-          animation: glxShine 3s ease-in-out infinite;
-        }
-        @keyframes glxShine {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .glx-blob, .glx-float, .glx-shimmer, .glx-shine, .glx-reveal {
-            animation: none !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }

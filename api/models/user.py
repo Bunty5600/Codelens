@@ -6,8 +6,9 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, nullable=False)
+    clerk_id = Column(String, unique=True, index=True, nullable=True)
+    email = Column(String, unique=True, nullable=True)
     name = Column(String)
-    hashed_password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=True)
 
     analyses = relationship("Analysis", back_populates="user")
