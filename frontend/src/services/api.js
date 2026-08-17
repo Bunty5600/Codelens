@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:9000",
-  timeout: 30000,
+  timeout: 60000,
 })
 
 // Attach the current Clerk session token to every request. Clerk attaches
