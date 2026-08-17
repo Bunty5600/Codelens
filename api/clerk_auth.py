@@ -50,6 +50,24 @@ def _get_or_create_local_user(db: Session, clerk_user_id: str) -> user_model.Use
         # email/name later; auth itself already succeeded.
         pass
 
+    # A row with this email may already exist from the old password-based
+    # signup flow (pre-Clerk), or from a partial signup that never got a
+    # clerk_id attached. `email` is a unique column, so inserting a fresh
+    # row would violate that constraint - link the existing row instead.
+    if email:
+        existing_by_email = (
+            db.query(user_model.User)
+            .filter(user_model.User.email == email)
+            .first()
+        )
+        if existing_by_email:
+            existing_by_email.clerk_id = clerk_user_id
+            if name and not existing_by_email.name:
+                existing_by_email.name = name
+            db.commit()
+            db.refresh(existing_by_email)
+            return existing_by_email
+
     db_user = user_model.User(clerk_id=clerk_user_id, email=email, name=name)
     db.add(db_user)
     db.commit()
