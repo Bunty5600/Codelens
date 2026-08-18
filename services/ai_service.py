@@ -45,23 +45,32 @@ ARCHITECTURE:
 - [architectural improvement 1]
 - [architectural improvement 2]"""
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {groq_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "llama-3.3-70b-versatile",
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.3,
-                "max_tokens": 400
-            },
-            timeout=30.0
-        )
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "openai/gpt-oss-120b",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.3,
+                    "max_tokens": 400
+                },
+                timeout=30.0
+            )
+        raw = response.json()
+    except Exception as e:
+        print("Groq request error:", e)
+        return {
+            "risk_level": "Medium",
+            "root_cause": "AI recommendations are temporarily unavailable.",
+            "refactoring": [],
+            "architecture": []
+        }
 
-    raw = response.json()
     content = raw.get("choices", [{}])[0].get("message", {}).get("content", "")
     return parse_ai_response(content)
 
