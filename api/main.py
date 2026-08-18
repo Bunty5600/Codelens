@@ -257,7 +257,13 @@ async def get_ai_tip(payload: dict):
                 "max_tokens": 120
             }
         )
-        return response.json()
+
+    body = response.json()
+    if response.status_code != 200 or "choices" not in body:
+        print("Groq /ai-tip error:", body)
+        raise HTTPException(status_code=502, detail="AI tip generation failed")
+
+    return body
 
 
 @app.post("/analyze/smells")
