@@ -251,7 +251,7 @@ async def get_ai_tip(payload: dict):
                 "Content-Type": "application/json"
             },
             json={
-                "model": "llama-3.3-70b-versatile",
+                "model": "openai/gpt-oss-120b",
                 "messages": [{"role": "user", "content": payload.get("prompt")}],
                 "temperature": 0.3,
                 "max_tokens": 120
