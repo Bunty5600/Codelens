@@ -1,4 +1,4 @@
-# CodeLens AI- https://codelens-htex-git-main-reloo.vercel.app/
+# CodeLens AI
 
 ### AI-Powered Code Quality & Maintainability Analyzer
 
