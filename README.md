@@ -316,8 +316,17 @@ All endpoints below (except `/`) require a valid Clerk session token in the `Aut
 
 ## 👨‍💻 Author
 
+
 **Bunty Bhainsa**
 Computer Science Engineering Student
 AI Full-Stack Developer
+## License
+
+CodeLens AI is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+Copyright © 2026 Bunty Bhainsa.
+
+Contributions remain subject to the repository's MIT License and the terms described in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 
 GitHub: [https://github.com/Bunty5600](https://github.com/Bunty5600)
